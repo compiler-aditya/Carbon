@@ -100,14 +100,18 @@ final class CaptureModel {
     }
 
     private func processPage(_ image: CGImage, index: Int, of total: Int) async throws -> [UUID] {
-        let recordID = UUID()
+        // One identity for this photograph, shared by every record it produces. A table page
+        // yields many rows from one image, so the file cannot be keyed by a record.
+        let captureID = UUID()
 
         // Persist before anything else. A crash during extraction must never cost someone a
         // photograph of a page they have already filed away.
         state = .processing(step: .reading, pageIndex: index, total: total)
-        let pageRef = try await services.pageStore.persist(image, recordID: recordID, pageIndex: 0)
+        let pageRef = try await services.pageStore.persist(
+            image, captureID: captureID, pageIndex: 0
+        )
 
-        let page = try await services.recognizer.recognize(image, pageID: recordID)
+        let page = try await services.recognizer.recognize(image, pageID: captureID)
 
         state = .processing(step: .matching, pageIndex: index, total: total)
         let result = await services.extractor.extract(page: page, template: template)
@@ -138,7 +142,8 @@ final class CaptureModel {
             pageID: result.pageID,
             durationMs: result.durationMs,
             engineVersion: result.engineVersion,
-            diagnostics: result.diagnostics
+            diagnostics: result.diagnostics,
+            aliasesToLearn: result.aliasesToLearn
         )
 
         let ids = try await store.save(

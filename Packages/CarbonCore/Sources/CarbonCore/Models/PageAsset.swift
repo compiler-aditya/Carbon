@@ -7,7 +7,11 @@ public final class PageAsset {
     public var id: UUID = UUID()
     public var pageIndex: Int = 0
 
-    /// Relative to `Application Support/Scans/`.
+    /// Which capture produced this page. Several records share one when a table page yields
+    /// many rows, which is why the file is keyed by this and not by a record id.
+    public var captureID: UUID = UUID()
+
+    /// Relative to `Application Support/Scans/<captureID>/`.
     public var fileName: String = ""
 
     public var pixelWidth: Int = 0

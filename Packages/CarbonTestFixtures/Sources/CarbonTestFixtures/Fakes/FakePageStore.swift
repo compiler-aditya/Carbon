@@ -21,9 +21,9 @@ public actor FakePageStore: PageStoring {
     public var storedRefs: [PageRef] { Array(stored.keys) }
 
     @discardableResult
-    public func persist(_ image: CGImage, recordID: UUID, pageIndex: Int) async throws -> PageRef {
+    public func persist(_ image: CGImage, captureID: UUID, pageIndex: Int) async throws -> PageRef {
         if let failureToThrow { throw failureToThrow }
-        let ref = PageRef(recordID: recordID, pageIndex: pageIndex)
+        let ref = PageRef(captureID: captureID, pageIndex: pageIndex)
         stored[ref] = CGSize(width: image.width, height: image.height)
         return ref
     }
@@ -39,8 +39,8 @@ public actor FakePageStore: PageStoring {
         stored[ref] = nil
     }
 
-    public func deleteAll(recordID: UUID) async throws {
-        stored = stored.filter { $0.key.recordID != recordID }
+    public func deleteAll(captureID: UUID) async throws {
+        stored = stored.filter { $0.key.captureID != captureID }
     }
 
     public func totalBytes() async throws -> Int {

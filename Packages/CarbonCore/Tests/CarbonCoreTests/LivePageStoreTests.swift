@@ -29,43 +29,43 @@ struct LivePageStoreTests {
         let (store, root) = try makeStore()
         defer { try? FileManager.default.removeItem(at: root) }
 
-        let recordID = UUID()
-        let ref = try await store.persist(makeImage(), recordID: recordID, pageIndex: 0)
+        let captureID = UUID()
+        let ref = try await store.persist(makeImage(), captureID: captureID, pageIndex: 0)
 
-        #expect(ref.relativePath == "\(recordID.uuidString)/0.jpg")
+        #expect(ref.relativePath == "\(captureID.uuidString)/0.jpg")
 
         let loaded = try await store.load(ref)
         #expect(loaded.width == 64)
         #expect(loaded.height == 48)
     }
 
-    @Test("Pages land in one directory per record")
-    func directoryPerRecord() async throws {
+    @Test("Pages land in one directory per capture")
+    func directoryPerCapture() async throws {
         let (store, root) = try makeStore()
         defer { try? FileManager.default.removeItem(at: root) }
 
-        let recordID = UUID()
+        let captureID = UUID()
         for index in 0..<3 {
-            try await store.persist(makeImage(), recordID: recordID, pageIndex: index)
+            try await store.persist(makeImage(), captureID: captureID, pageIndex: index)
         }
 
-        let directory = root.appending(path: recordID.uuidString)
+        let directory = root.appending(path: captureID.uuidString)
         let files = try FileManager.default.contentsOfDirectory(atPath: directory.path())
         #expect(Set(files) == ["0.jpg", "1.jpg", "2.jpg"])
     }
 
-    @Test("Deleting a record removes its files, not just its rows")
+    @Test("Deleting a capture removes its files, not just its rows")
     func deleteAllRemovesFiles() async throws {
         let (store, root) = try makeStore()
         defer { try? FileManager.default.removeItem(at: root) }
 
         let doomed = UUID()
         let kept = UUID()
-        try await store.persist(makeImage(), recordID: doomed, pageIndex: 0)
-        try await store.persist(makeImage(), recordID: doomed, pageIndex: 1)
-        try await store.persist(makeImage(), recordID: kept, pageIndex: 0)
+        try await store.persist(makeImage(), captureID: doomed, pageIndex: 0)
+        try await store.persist(makeImage(), captureID: doomed, pageIndex: 1)
+        try await store.persist(makeImage(), captureID: kept, pageIndex: 0)
 
-        try await store.deleteAll(recordID: doomed)
+        try await store.deleteAll(captureID: doomed)
 
         #expect(!FileManager.default.fileExists(atPath: root.appending(path: doomed.uuidString).path()))
         #expect(FileManager.default.fileExists(atPath: root.appending(path: kept.uuidString).path()))
@@ -76,14 +76,14 @@ struct LivePageStoreTests {
         let (store, root) = try makeStore()
         defer { try? FileManager.default.removeItem(at: root) }
 
-        let recordID = UUID()
-        let first = try await store.persist(makeImage(), recordID: recordID, pageIndex: 0)
-        try await store.persist(makeImage(), recordID: recordID, pageIndex: 1)
+        let captureID = UUID()
+        let first = try await store.persist(makeImage(), captureID: captureID, pageIndex: 0)
+        try await store.persist(makeImage(), captureID: captureID, pageIndex: 1)
 
         try await store.delete(first)
 
         let files = try FileManager.default.contentsOfDirectory(
-            atPath: root.appending(path: recordID.uuidString).path()
+            atPath: root.appending(path: captureID.uuidString).path()
         )
         #expect(files == ["1.jpg"])
     }
@@ -94,7 +94,7 @@ struct LivePageStoreTests {
         defer { try? FileManager.default.removeItem(at: root) }
 
         await #expect(throws: CarbonError.self) {
-            try await store.load(PageRef(recordID: UUID(), pageIndex: 0))
+            try await store.load(PageRef(captureID: UUID(), pageIndex: 0))
         }
     }
 
@@ -106,11 +106,11 @@ struct LivePageStoreTests {
         let empty = try await store.totalBytes()
         #expect(empty == 0)
 
-        try await store.persist(makeImage(width: 400, height: 300), recordID: UUID(), pageIndex: 0)
+        try await store.persist(makeImage(width: 400, height: 300), captureID: UUID(), pageIndex: 0)
         let afterOne = try await store.totalBytes()
         #expect(afterOne > 0)
 
-        try await store.persist(makeImage(width: 400, height: 300), recordID: UUID(), pageIndex: 0)
+        try await store.persist(makeImage(width: 400, height: 300), captureID: UUID(), pageIndex: 0)
         #expect(try await store.totalBytes() > afterOne)
     }
 
@@ -119,7 +119,7 @@ struct LivePageStoreTests {
         let (store, root) = try makeStore()
         defer { try? FileManager.default.removeItem(at: root) }
 
-        try await store.persist(makeImage(), recordID: UUID(), pageIndex: 0)
+        try await store.persist(makeImage(), captureID: UUID(), pageIndex: 0)
 
         let excluded = try root.resourceValues(forKeys: [.isExcludedFromBackupKey])
             .isExcludedFromBackup

@@ -27,10 +27,10 @@ public actor LivePageStore: PageStoring {
     }
 
     @discardableResult
-    public func persist(_ image: CGImage, recordID: UUID, pageIndex: Int) async throws -> PageRef {
+    public func persist(_ image: CGImage, captureID: UUID, pageIndex: Int) async throws -> PageRef {
         try prepareRootIfNeeded()
 
-        let ref = PageRef(recordID: recordID, pageIndex: pageIndex)
+        let ref = PageRef(captureID: captureID, pageIndex: pageIndex)
         let url = fileURL(for: ref)
         try FileManager.default.createDirectory(
             at: url.deletingLastPathComponent(), withIntermediateDirectories: true
@@ -76,8 +76,8 @@ public actor LivePageStore: PageStoring {
     /// SwiftData's cascade delete removes the `PageAsset` rows and **will not touch these
     /// files**. Every record delete has to come through here or the container fills with
     /// orphaned photographs — the most common source of leaked data in apps of this shape.
-    public func deleteAll(recordID: UUID) async throws {
-        let directory = rootURL.appending(path: recordID.uuidString, directoryHint: .isDirectory)
+    public func deleteAll(captureID: UUID) async throws {
+        let directory = rootURL.appending(path: captureID.uuidString, directoryHint: .isDirectory)
         try? FileManager.default.removeItem(at: directory)
     }
 

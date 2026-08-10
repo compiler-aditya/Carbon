@@ -140,18 +140,18 @@ extension CarbonStore {
 
     /// Deletes a template, its records, and every photograph behind them.
     ///
-    /// The record ids are collected *before* the delete, because afterwards there is nothing
+    /// The capture ids are collected *before* the delete, because afterwards there is nothing
     /// left to ask which files to remove.
     public func deleteTemplate(id: UUID, pageStore: any PageStoring) async throws {
         guard let template = try template(withID: id) else { return }
 
-        let recordIDs = (template.records ?? []).map(\.id)
+        let captures = Set(
+            (template.records ?? []).flatMap { ($0.pages ?? []).map(\.captureID) }
+        )
         modelContext.delete(template)
         try modelContext.save()
 
-        for recordID in recordIDs {
-            try await pageStore.deleteAll(recordID: recordID)
-        }
+        try await deleteUnreferencedCaptures(captures, pageStore: pageStore)
     }
 
     // MARK: Reads

@@ -250,8 +250,11 @@ struct CarbonStoreTests {
         defer { try? FileManager.default.removeItem(at: root) }
 
         let templateID = try await store.createTemplate(name: "Register", fields: registerFields)
-        let ids = try await store.save(extraction(rows: [["item": "Sugar"]]), templateID: templateID)
-        try await pageStore.persist(makeImage(), recordID: ids[0], pageIndex: 0)
+        let captureID = UUID()
+        let ref = try await pageStore.persist(makeImage(), captureID: captureID, pageIndex: 0)
+        let ids = try await store.save(
+            extraction(rows: [["item": "Sugar"]]), templateID: templateID, pages: [ref]
+        )
 
         #expect(try await pageStore.totalBytes() > 0)
 
@@ -268,13 +271,14 @@ struct CarbonStoreTests {
         defer { try? FileManager.default.removeItem(at: root) }
 
         let templateID = try await store.createTemplate(name: "Register", fields: registerFields)
-        let ids = try await store.save(
+        // One photograph, two records — the case that made the old record-keyed layout wrong.
+        let captureID = UUID()
+        let ref = try await pageStore.persist(makeImage(), captureID: captureID, pageIndex: 0)
+        try await store.save(
             extraction(rows: [["item": "Sugar"], ["item": "Tea"]]),
-            templateID: templateID
+            templateID: templateID,
+            pages: [ref]
         )
-        for id in ids {
-            try await pageStore.persist(makeImage(), recordID: id, pageIndex: 0)
-        }
 
         try await store.deleteTemplate(id: templateID, pageStore: pageStore)
 

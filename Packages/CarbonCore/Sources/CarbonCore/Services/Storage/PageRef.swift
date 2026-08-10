@@ -6,23 +6,28 @@ import Foundation
 /// SwiftData blobs because they are trivial to inspect while debugging, trivial to purge, and
 /// they keep the store small enough that the dataset list scrolls without care.
 public struct PageRef: Sendable, Hashable, Codable {
-    public let recordID: UUID
+    /// Identifies the **capture**, not a record.
+    ///
+    /// One photograph of a register produces many records, and they all point at the same
+    /// image. Keying the directory by record id could never line up: the records do not exist
+    /// yet when the page is persisted, and there are several of them when they do.
+    public let captureID: UUID
     public let pageIndex: Int
 
-    public init(recordID: UUID, pageIndex: Int) {
-        self.recordID = recordID
+    public init(captureID: UUID, pageIndex: Int) {
+        self.captureID = captureID
         self.pageIndex = pageIndex
     }
 
     public var fileName: String { "\(pageIndex).jpg" }
 
-    /// Relative to the scans directory: `<recordUUID>/<pageIndex>.jpg`.
+    /// Relative to the scans directory: `<captureUUID>/<pageIndex>.jpg`.
     ///
-    /// One directory per record, so deleting a record is one directory removal. SwiftData's
-    /// cascade delete removes the rows but will not touch these files — the delete path has
-    /// to do it explicitly, and that is the single most common source of orphaned data in
-    /// apps shaped like this one.
-    public var relativePath: String { "\(recordID.uuidString)/\(fileName)" }
+    /// One directory per capture. SwiftData's cascade delete removes the rows but will not
+    /// touch these files, and a file is shared by every record the page produced — so the
+    /// delete path removes it only once nothing references it any more. This is the single
+    /// most common source of orphaned data in apps shaped like this one.
+    public var relativePath: String { "\(captureID.uuidString)/\(fileName)" }
 
     public static let directoryName = "Scans"
 

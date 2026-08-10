@@ -62,6 +62,7 @@ public actor CarbonStore {
             for page in pages {
                 let asset = PageAsset()
                 asset.record = record
+                asset.captureID = page.captureID
                 asset.pageIndex = page.pageIndex
                 asset.fileName = page.fileName
                 asset.createdAt = capturedAt
@@ -124,9 +125,31 @@ public actor CarbonStore {
     /// not touch the files — a delete that skips this leaves orphans in the container.
     public func deleteRecord(id: UUID, pageStore: any PageStoring) async throws {
         guard let record = try record(withID: id) else { return }
+        let captures = Set((record.pages ?? []).map(\.captureID))
+
         modelContext.delete(record)
         try modelContext.save()
-        try await pageStore.deleteAll(recordID: id)
+
+        try await deleteUnreferencedCaptures(captures, pageStore: pageStore)
+    }
+
+    /// Deletes a capture's photograph only once no record still points at it.
+    ///
+    /// A table page produces many records from one image. Deleting the file with the first of
+    /// them would blank the source for every sibling row still in the dataset, so the last
+    /// one out turns off the light.
+    func deleteUnreferencedCaptures(
+        _ captureIDs: Set<UUID>,
+        pageStore: any PageStoring
+    ) async throws {
+        for captureID in captureIDs {
+            var descriptor = FetchDescriptor<PageAsset>(
+                predicate: #Predicate { $0.captureID == captureID }
+            )
+            descriptor.fetchLimit = 1
+            guard try modelContext.fetch(descriptor).isEmpty else { continue }
+            try await pageStore.deleteAll(captureID: captureID)
+        }
     }
 
     /// Records the header spellings a page taught us.
