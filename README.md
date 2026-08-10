@@ -2,6 +2,7 @@
 
 **Your form, remembered.** Map a paper form once. Every photo after that becomes a row.
 
+[![build-and-test](https://github.com/compiler-aditya/Carbon/actions/workflows/ci.yml/badge.svg)](https://github.com/compiler-aditya/Carbon/actions/workflows/ci.yml)
 ![Platform](https://img.shields.io/badge/platform-iOS%2026%2B-lightgrey)
 ![Swift](https://img.shields.io/badge/swift-6.x-orange)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)

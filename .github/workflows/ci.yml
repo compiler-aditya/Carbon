@@ -1,0 +1,69 @@
+name: build-and-test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pick the newest installed Xcode rather than pinning a version, then assert it actually
+      # carries the iOS 26 SDK. Runner images change without notice; a green badge that built
+      # against the wrong SDK is worse than no badge, so this fails loudly instead.
+      - name: Select and verify toolchain
+        run: |
+          set -euo pipefail
+          XCODE=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          echo "Selecting $XCODE"
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version
+          swift --version
+          SDK=$(xcodebuild -showsdks | sed -n 's/.*-sdk iphonesimulator\([0-9][0-9]*\).*/\1/p' | sort -n | tail -1)
+          echo "Latest iOS simulator SDK major version: $SDK"
+          if [ -z "$SDK" ] || [ "$SDK" -lt 26 ]; then
+            echo "::error::Carbon targets iOS 26. This runner's newest iOS SDK is ${SDK:-none}."
+            exit 1
+          fi
+
+      # No third-party dependencies and no app target, so this needs no network and is the
+      # fast signal. It runs first for that reason.
+      - name: Test CarbonCore
+        working-directory: Packages/CarbonCore
+        run: swift test
+
+      - name: Guard against a committed key
+        run: |
+          if [ -f Config/Secrets.xcconfig ]; then
+            echo "::error::Config/Secrets.xcconfig must never be committed."
+            exit 1
+          fi
+
+      # Building with no Secrets.xcconfig is the zero-config path under test. If the app stops
+      # building with the placeholder key, CI catches it rather than a judge catching it on a
+      # fresh clone.
+      - name: Build app with placeholder key
+        run: |
+          set -euo pipefail
+          DESTINATION=$(xcrun simctl list devices available \
+            | sed -n 's/ *\(iPhone [^(]*\) (\([0-9A-F-]*\)).*/\2/p' | head -1)
+          echo "Building for simulator $DESTINATION"
+          xcodebuild build \
+            -scheme Carbon \
+            -destination "id=$DESTINATION" \
+            -derivedDataPath .build-ci \
+            CODE_SIGNING_ALLOWED=NO
+
+      # The licence must stay detectable by GitHub for the submission to be complete. The
+      # cheapest way to keep it that way is to notice the moment it stops being MIT.
+      - name: Check LICENSE is unmodified MIT
+        run: |
+          grep -q "^MIT License" LICENSE
+          grep -q 'THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND' LICENSE
