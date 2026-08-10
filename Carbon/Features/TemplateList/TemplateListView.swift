@@ -39,10 +39,22 @@ struct TemplateListView: View {
         .sheet(isPresented: $isShowingPaywall) {
             PaywallSheet(reason: .templateLimit)
         }
+        // A shortcut may have cold-launched the app, so the request is picked up once the
+        // templates have actually loaded rather than at init.
+        .task(id: templates.count) { await honourPendingIntent() }
     }
 
     private var store: CarbonStore {
         CarbonStore(modelContainer: modelContext.container)
+    }
+
+    /// Opens the template a Siri phrase or Shortcut asked for.
+    ///
+    /// The request is consumed rather than observed, so re-evaluating this view does not
+    /// re-open the camera.
+    private func honourPendingIntent() async {
+        guard let requested = CaptureIntentRouter.shared.take() else { return }
+        selection = templates.first { $0.id == requested }?.snapshot
     }
 
     private var grid: some View {
