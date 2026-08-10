@@ -11,12 +11,17 @@ struct SettingsView: View {
 
     @State private var isShowingPaywall = false
     @State private var restoreOutcome: RestoreOutcome?
+    @State private var modelState: ModelAvailability.State?
 
     var body: some View {
         List {
             proSection
+            extractionSection
             privacySection
             aboutSection
+        }
+        .task {
+            modelState = await ModelAvailability().state()
         }
         .sheet(isPresented: $isShowingPaywall) {
             // Presented from the action, never from the app root. The user sees the paywall
@@ -50,6 +55,34 @@ struct SettingsView: View {
                 )
                 .font(.footnote)
                 .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    /// One line, never an alert, and never blocking anything.
+    ///
+    /// Extraction has already run and produced a usable result by the time anyone reads this.
+    /// It exists so someone who wonders why a form took more correcting than usual can find
+    /// out — not to ask them to fix something.
+    @ViewBuilder
+    private var extractionSection: some View {
+        Section("Extraction") {
+            switch modelState {
+            case .available:
+                Text("Carbon is using on-device intelligence for fields it can't place by layout.")
+                    .font(CarbonFont.callout)
+            case .unavailable(let reason):
+                VStack(alignment: .leading, spacing: CarbonSpacing.hair) {
+                    Text(String(localized: reason.settingsTitle))
+                        .font(CarbonFont.body)
+                    Text(String(localized: reason.settingsGuidance))
+                        .font(CarbonFont.caption)
+                        .foregroundStyle(CarbonColor.inkMuted)
+                }
+            case nil:
+                Text("Checking…")
+                    .font(CarbonFont.caption)
+                    .foregroundStyle(CarbonColor.inkMuted)
             }
         }
     }

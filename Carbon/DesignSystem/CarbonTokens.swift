@@ -37,6 +37,7 @@ enum CarbonFont {
     static let dataValueLarge = Font.system(.title2, design: .monospaced).weight(.medium)
 
     static let body = Font.system(.body)
+    static let callout = Font.system(.callout)
     static let caption = Font.system(.caption)
     static let stamp = Font.system(.caption2, design: .default).weight(.semibold)
 }

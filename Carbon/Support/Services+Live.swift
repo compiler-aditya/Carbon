@@ -26,7 +26,7 @@ extension Services {
         return Services(
             pageStore: makePageStore(),
             recognizer: LiveRecognizer(),
-            extractor: DeterministicExtractor(),
+            extractor: LadderExtractor(resolver: FoundationModelResolver()),
             normalizer: StandardNormalizer(),
             exporter: CSVExporter(),
             entitlements: entitlements,
