@@ -123,16 +123,16 @@ Note `TemplateSnapshot` / `RecordSnapshot`: **immutable `Sendable` structs proje
 No container. A plain struct in the environment.
 
 ```swift
-@MainActor
-struct Services {
+struct Services: Sendable {
     var pageStore: any PageStoring
     var recognizer: any Recognizing
     var extractor: any StructuredExtracting
+    var normalizer: any Normalizing
     var exporter: any Exporting
     var entitlements: any EntitlementProviding
     var meter: any UsageMetering
 
-    static func live() -> Services { ... }
+    static func live() -> Services { ... }      // app target — owns the concrete types
     static func preview() -> Services { ... }   // fakes, deterministic, used by every #Preview
 }
 
@@ -140,6 +140,15 @@ extension EnvironmentValues {
     @Entry var services: Services = .preview()
 }
 ```
+
+**`Services` is `Sendable`, not `@MainActor`** — this was `@MainActor` in an earlier draft of this document and it does not compile. `@Entry` generates a *nonisolated* default value, so a main-actor-isolated `.preview()` cannot supply it. The error only appears once there is an app target to build, which is late enough to be annoying.
+
+The correction is also the better design. `Services` is a bag of references with no state of its own; isolation belongs to the services inside it, each of which is already an `actor` or main-actor-bound in its own right. Two consequences worth knowing before you write the code:
+
+- `EntitlementProviding` inherits `Sendable`. Every conformer is a `@MainActor` class and therefore implicitly `Sendable` already; declaring it on the protocol is what makes the *existential* usable inside a nonisolated struct. Reads still happen on the main actor, which is where views are.
+- The default value needs an entitlement provider constructible off the main actor, and an `@Observable` class is not one — the macro routes stored properties through main-actor-isolated setters, so even a `nonisolated init` fails. `StaticEntitlementService` fills that role: immutable, conforming to `Observable` without the macro (it has no requirements, and there is nothing to observe when every property is a `let`), and `Sendable` without `@unchecked`. Its `nonisolated` is load-bearing — conforming to a `@MainActor` protocol otherwise infers isolation onto the whole class.
+
+`StaticEntitlementService` is not only a test seam. It is what `live()` should use when no RevenueCat key is configured: with a placeholder key there is nothing to observe and nothing that can change, so returning a fixed `.unknown` is more honest than standing up the SDK and waiting for it to fail.
 
 Every SwiftUI `#Preview` uses `.preview()`. Consequence: **every screen has a working preview with realistic data**, on the first day, with no camera and no model. That is what lets the UI engineer move at full speed while the pipeline is still being built, and it is why previews are a schedule decision rather than a nicety.
 
