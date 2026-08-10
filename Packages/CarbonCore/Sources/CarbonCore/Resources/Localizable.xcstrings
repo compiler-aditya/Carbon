@@ -1,0 +1,241 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "error.camera_permission_denied.guidance" : {
+      "comment" : "Guidance when camera access has been refused.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn on camera access in Settings to scan a form."
+          }
+        }
+      }
+    },
+    "error.camera_permission_denied.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carbon doesn't have camera access."
+          }
+        }
+      }
+    },
+    "error.camera_unavailable.guidance" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a photo from your library instead."
+          }
+        }
+      }
+    },
+    "error.camera_unavailable.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The camera isn't available."
+          }
+        }
+      }
+    },
+    "error.export_failed.guidance" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try again, or export a smaller range of records."
+          }
+        }
+      }
+    },
+    "error.export_failed.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The export didn't finish."
+          }
+        }
+      }
+    },
+    "error.model_timed_out.guidance" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "They're marked for review at the top of the record."
+          }
+        }
+      }
+    },
+    "error.model_timed_out.title" : {
+      "comment" : "Not an alert. Shown only where the outcome is already visible.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Some fields were left for you to fill in."
+          }
+        }
+      }
+    },
+    "error.no_fields_matched.guidance" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This may be a different form. Choose another template, or scan again."
+          }
+        }
+      }
+    },
+    "error.no_fields_matched.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing matched this template."
+          }
+        }
+      }
+    },
+    "error.no_table_found.guidance" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This template expects a table. Try a straighter photo, or switch the template to single-record mode."
+          }
+        }
+      }
+    },
+    "error.no_table_found.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No table found on this page."
+          }
+        }
+      }
+    },
+    "error.page_write_failed.guidance" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check how much space is left on your device, then scan again."
+          }
+        }
+      }
+    },
+    "error.page_write_failed.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That page couldn't be saved."
+          }
+        }
+      }
+    },
+    "error.recognition_failed.guidance" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try a straighter photo in better light."
+          }
+        }
+      }
+    },
+    "error.recognition_failed.title" : {
+      "comment" : "%lld is the page number, shown 1-based.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Page %lld couldn't be read."
+          }
+        }
+      }
+    },
+    "model_unavailable.device_not_eligible.guidance" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This device reads forms by matching the page layout. Everything works."
+          }
+        }
+      }
+    },
+    "model_unavailable.not_enabled.guidance" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carbon is reading forms by matching the page layout. Turn on Apple Intelligence in Settings to also fill in fields it can't place."
+          }
+        }
+      }
+    },
+    "model_unavailable.not_ready.guidance" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Still downloading. Carbon is matching the page layout meanwhile."
+          }
+        }
+      }
+    },
+    "model_unavailable.title" : {
+      "comment" : "Settings status line. Never an alert.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On-device intelligence is off."
+          }
+        }
+      }
+    },
+    "model_unavailable.unsupported_language.guidance" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your language isn't covered yet. Carbon is matching the page layout."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

@@ -6,7 +6,11 @@ let package = Package(
     platforms: [.iOS(.v26), .macOS(.v26)],
     products: [.library(name: "CarbonCore", targets: ["CarbonCore"])],
     targets: [
-        .target(name: "CarbonCore", swiftSettings: [.swiftLanguageMode(.v6)]),
+        .target(
+            name: "CarbonCore",
+            resources: [.process("Resources")],
+            swiftSettings: [.swiftLanguageMode(.v6)]
+        ),
         .testTarget(name: "CarbonCoreTests", dependencies: ["CarbonCore"], swiftSettings: [.swiftLanguageMode(.v6)]),
     ]
 )
