@@ -247,7 +247,7 @@ struct LadderExtractorTests {
     }
 }
 
-@Suite("Model availability")
+@Suite("Model availability", .enabled(if: FrameworkBackedTests.areEnabled))
 struct ModelAvailabilityTests {
     @Test("Whatever this machine reports, the answer is one we can act on")
     func resolvesToAKnownState() async {

@@ -14,7 +14,7 @@ import Testing
 ///
 /// A rendered form is not a photograph, so this proves the mapping rather than the accuracy.
 /// Accuracy is what the corpus harness measures.
-@Suite("Live recognition against a rendered page")
+@Suite("Live recognition against a rendered page", .enabled(if: FrameworkBackedTests.areEnabled))
 struct LiveRecognizerIntegrationTests {
     /// Draws a ruled register: a title, a header row, and three data rows.
     private func renderRegister(width: Int = 1000, height: Int = 700) -> CGImage {
