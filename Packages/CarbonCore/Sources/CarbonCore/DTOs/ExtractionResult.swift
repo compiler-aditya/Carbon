@@ -14,18 +14,28 @@ public struct ExtractionResult: Sendable, Hashable {
     /// Surfaced in a debug pane, never to users.
     public let diagnostics: [String]
 
+    /// Header spellings this page taught us, by field key.
+    ///
+    /// Populated when a column was matched by fuzzy comparison rather than exactly — the
+    /// header really says "Amt" and the template only knew "Amount". Recording it turns next
+    /// week's guess into next week's exact match, with no model involved. This is the whole
+    /// of the app's learning, and it costs about twenty lines.
+    public let aliasesToLearn: [String: String]
+
     public init(
         records: [ExtractedRecord],
         pageID: UUID,
         durationMs: Int,
         engineVersion: String,
-        diagnostics: [String]
+        diagnostics: [String],
+        aliasesToLearn: [String: String] = [:]
     ) {
         self.records = records
         self.pageID = pageID
         self.durationMs = durationMs
         self.engineVersion = engineVersion
         self.diagnostics = diagnostics
+        self.aliasesToLearn = aliasesToLearn
     }
 
     /// Share of values that Tier 1 resolved without the model. Reported in the README as

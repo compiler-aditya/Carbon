@@ -17,6 +17,14 @@ enum ColumnMatcher {
         /// How confident we are in the *mapping*, separate from how well the cell was read.
         /// A shaky header match should lower the confidence of every value in that column.
         let score: Double
+
+        /// The header text as it was actually printed on this page. Kept so a match made by
+        /// fuzzy comparison can be turned into an exact one next time.
+        let headerText: String
+
+        /// True when the header matched a declared alias character for character. Anything
+        /// less was a guess that happened to be good enough, and is worth remembering.
+        var wasExact: Bool { score >= 1.0 }
     }
 
     /// Assigns columns to fields, best matches first.
@@ -37,7 +45,12 @@ enum ColumnMatcher {
                 let score = StringSimilarity.bestScore(for: cell.text, among: aliases)
                 if score >= minimumScore {
                     candidates.append(
-                        Match(fieldKey: field.key, columnIndex: columnIndex, score: score)
+                        Match(
+                            fieldKey: field.key,
+                            columnIndex: columnIndex,
+                            score: score,
+                            headerText: cell.text
+                        )
                     )
                 }
             }
@@ -71,7 +84,9 @@ enum ColumnMatcher {
     /// certain — the user mapped these fields by hand and is the one who can confirm it.
     static func positionalMatches(columnCount: Int, fields: [FieldSnapshot]) -> [Match] {
         zip(fields, 0..<columnCount).map { field, index in
-            Match(fieldKey: field.key, columnIndex: index, score: 0.5)
+            // No header means nothing to learn from — an empty headerText keeps the write
+            // path from recording a column position as if it were a name.
+            Match(fieldKey: field.key, columnIndex: index, score: 0.5, headerText: "")
         }
     }
 }

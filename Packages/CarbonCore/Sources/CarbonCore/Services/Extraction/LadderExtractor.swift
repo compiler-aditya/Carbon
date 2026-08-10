@@ -70,7 +70,8 @@ public struct LadderExtractor: StructuredExtracting {
             durationMs: Int(elapsed.components.seconds * 1000)
                 + Int(elapsed.components.attoseconds / 1_000_000_000_000_000),
             engineVersion: Self.engineVersion,
-            diagnostics: diagnostics
+            diagnostics: diagnostics,
+            aliasesToLearn: tier1.aliasesToLearn
         )
     }
 
@@ -147,7 +148,8 @@ public struct LadderExtractor: StructuredExtracting {
             pageID: result.pageID,
             durationMs: result.durationMs,
             engineVersion: Self.engineVersion,
-            diagnostics: diagnostics
+            diagnostics: diagnostics,
+            aliasesToLearn: result.aliasesToLearn
         )
     }
 }

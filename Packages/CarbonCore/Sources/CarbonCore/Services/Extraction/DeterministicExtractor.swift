@@ -22,10 +22,11 @@ public struct DeterministicExtractor: StructuredExtracting {
 
         let records: [ExtractedRecord]
         var diagnostics: [String] = []
+        var aliasesToLearn: [String: String] = [:]
 
         switch template.mode {
         case .table:
-            (records, diagnostics) = tableRecords(page: page, template: template)
+            (records, diagnostics, aliasesToLearn) = tableRecords(page: page, template: template)
         case .record:
             (records, diagnostics) = ([recordModeRecord(page: page, template: template)], [])
         }
@@ -36,7 +37,8 @@ public struct DeterministicExtractor: StructuredExtracting {
             pageID: page.pageID,
             durationMs: Int(elapsed.components.seconds * 1000 + elapsed.components.attoseconds / 1_000_000_000_000_000),
             engineVersion: Self.engineVersion,
-            diagnostics: diagnostics
+            diagnostics: diagnostics,
+            aliasesToLearn: aliasesToLearn
         )
     }
 
@@ -45,9 +47,9 @@ public struct DeterministicExtractor: StructuredExtracting {
     private func tableRecords(
         page: RecognizedPage,
         template: TemplateSnapshot
-    ) -> ([ExtractedRecord], [String]) {
+    ) -> ([ExtractedRecord], [String], [String: String]) {
         guard let table = page.primaryTable else {
-            return ([], ["no table found on page"])
+            return ([], ["no table found on page"], [:])
         }
 
         var diagnostics: [String] = []
@@ -80,7 +82,15 @@ public struct DeterministicExtractor: StructuredExtracting {
             )
         }
 
-        return (records, diagnostics)
+        // Only inexact matches are worth remembering. A header that already matched a
+        // declared alias exactly has nothing to teach, and storing it would grow the alias
+        // list forever with duplicates.
+        var aliasesToLearn: [String: String] = [:]
+        for match in matches where !match.wasExact && !match.headerText.isEmpty {
+            aliasesToLearn[match.fieldKey] = match.headerText
+        }
+
+        return (records, diagnostics, aliasesToLearn)
     }
 
     private func value(

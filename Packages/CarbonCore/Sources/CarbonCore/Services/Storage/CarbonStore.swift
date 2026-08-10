@@ -71,6 +71,8 @@ public actor CarbonStore {
             createdIDs.append(record.id)
         }
 
+        learn(result.aliasesToLearn, on: template)
+
         template.lastUsedAt = capturedAt
         template.updatedAt = capturedAt
 
@@ -125,6 +127,28 @@ public actor CarbonStore {
         modelContext.delete(record)
         try modelContext.save()
         try await pageStore.deleteAll(recordID: id)
+    }
+
+    /// Records the header spellings a page taught us.
+    ///
+    /// The cheapest intelligent behaviour in the app: a column matched by fuzzy comparison
+    /// this time becomes an exact match next time, with no model involved and no setting for
+    /// the user to find. Aliases are compared case-insensitively so the same header in a
+    /// different case does not accumulate twice.
+    private func learn(_ aliases: [String: String], on template: FormTemplate) {
+        guard !aliases.isEmpty else { return }
+
+        for field in template.orderedFields {
+            guard let observed = aliases[field.key] else { continue }
+            let cleaned = observed.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !cleaned.isEmpty else { continue }
+
+            let known = Set(
+                (field.columnAliases + [field.label]).map { $0.lowercased() }
+            )
+            guard !known.contains(cleaned.lowercased()) else { continue }
+            field.columnAliases.append(cleaned)
+        }
     }
 
     // MARK: Lookups
