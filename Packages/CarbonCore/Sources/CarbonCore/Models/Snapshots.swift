@@ -50,7 +50,11 @@ extension FormTemplate {
             dateConvention: dateConvention,
             preferredDateFormat: preferredDateFormat.nilWhenEmpty,
             fields: orderedFields.map { $0.snapshot(learnedAliases: learnedHeaderAliases) },
-            learnedHeaderAliases: learnedHeaderAliases
+            learnedHeaderAliases: learnedHeaderAliases,
+            subtitle: subtitle,
+            symbolName: symbolName,
+            lastUsedAt: lastUsedAt,
+            recordCount: recordCount
         )
     }
 }
@@ -77,7 +81,10 @@ extension CaptureRecord {
             capturedAt: capturedAt,
             status: status,
             sourceRowIndex: sourceRowIndex,
-            values: (values ?? []).map(\.snapshot)
+            values: (values ?? []).map(\.snapshot),
+            engineVersion: engineVersion,
+            extractionDurationMs: extractionDurationMs,
+            modelWasAvailable: modelWasAvailable
         )
     }
 }

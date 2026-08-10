@@ -12,18 +12,30 @@ public struct RecordSnapshot: Sendable, Identifiable, Hashable {
 
     public let values: [FieldValueSnapshot]
 
+    // Provenance. The corpus harness compares runs across a week of changes, which it can
+    // only do if each record remembers which engine produced it and how long it took.
+    public let engineVersion: String
+    public let extractionDurationMs: Int
+    public let modelWasAvailable: Bool
+
     public init(
         id: UUID,
         capturedAt: Date,
         status: RecordStatus,
         sourceRowIndex: Int?,
-        values: [FieldValueSnapshot]
+        values: [FieldValueSnapshot],
+        engineVersion: String = "",
+        extractionDurationMs: Int = 0,
+        modelWasAvailable: Bool = false
     ) {
         self.id = id
         self.capturedAt = capturedAt
         self.status = status
         self.sourceRowIndex = sourceRowIndex
         self.values = values
+        self.engineVersion = engineVersion
+        self.extractionDurationMs = extractionDurationMs
+        self.modelWasAvailable = modelWasAvailable
     }
 
     public func value(forKey key: String) -> FieldValueSnapshot? {

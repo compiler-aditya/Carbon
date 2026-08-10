@@ -17,6 +17,14 @@ public struct TemplateSnapshot: Sendable, Identifiable, Hashable {
     /// Header strings seen on real scans of this form, accumulated from corrections.
     public let learnedHeaderAliases: [String]
 
+    // Presentation and provenance the templates list needs — a card shows the symbol, the
+    // subtitle, "142 records" and "2h ago". Carrying them here is what keeps that screen a
+    // straight read of a snapshot rather than a reason to reach for the model.
+    public let subtitle: String
+    public let symbolName: String
+    public let lastUsedAt: Date?
+    public let recordCount: Int
+
     public init(
         id: UUID,
         name: String,
@@ -24,7 +32,11 @@ public struct TemplateSnapshot: Sendable, Identifiable, Hashable {
         dateConvention: DateConvention,
         preferredDateFormat: String?,
         fields: [FieldSnapshot],
-        learnedHeaderAliases: [String]
+        learnedHeaderAliases: [String],
+        subtitle: String = "",
+        symbolName: String = "doc.text",
+        lastUsedAt: Date? = nil,
+        recordCount: Int = 0
     ) {
         self.id = id
         self.name = name
@@ -33,6 +45,10 @@ public struct TemplateSnapshot: Sendable, Identifiable, Hashable {
         self.preferredDateFormat = preferredDateFormat
         self.fields = fields
         self.learnedHeaderAliases = learnedHeaderAliases
+        self.subtitle = subtitle
+        self.symbolName = symbolName
+        self.lastUsedAt = lastUsedAt
+        self.recordCount = recordCount
     }
 
     public func field(forKey key: String) -> FieldSnapshot? {
