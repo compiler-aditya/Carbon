@@ -19,7 +19,7 @@ UsagePeriod   (standalone, one row per calendar month)
 ExportLog     (standalone, audit trail)
 ```
 
-Six entities. Resist adding a seventh.
+Seven entities. Resist adding an eighth.
 
 ## 2. Enumerations
 
@@ -209,7 +209,7 @@ Add an index on the hot query path — dataset list is `records for template, ne
 #Index<CaptureRecord>([\.capturedAt], [\.statusRaw])
 ```
 
-Verify the `#Index` macro's exact form against the installed SDK; if it is unavailable, the fetch is still correct, just unindexed, and at hackathon data volumes that is acceptable. Do not lose an hour here.
+**Verified:** the macro exists in the installed SDK (Xcode 26.6 / iOS SDK 26.5) as `#Index<T>(_ indices: [PartialKeyPath<T>]...)`, so the form written above compiles as-is. The fallback reasoning still stands if it ever changes — an unindexed fetch is correct, just slower, and at our data volumes that is acceptable. Do not lose an hour here.
 
 ## 6. FieldValue
 
@@ -304,6 +304,8 @@ public final class ExportLog {
 **Be honest about the meter in the README:** it is local, so a determined user can reset it by reinstalling. That is an accepted v1 tradeoff — entitlement state is authoritative via RevenueCat, and the free meter is a courtesy limit, not DRM. Server-side metering (or RevenueCat Virtual Currencies) is the v1.1 answer. Stating this plainly is better engineering communication than pretending the limit is enforced.
 
 `ExportLog` exists so Settings can show "12 exports, 486 records" — cheap, and it makes the app feel like it has a history.
+
+**`UsagePeriod` never leaves the model layer.** It is a `@Model` and therefore not `Sendable`, so `UsageMetering` returns a `UsagePeriodSnapshot` instead — defined in `03-architecture.md` §2 alongside the protocol. Same rule as every other entity here; noted explicitly because this one is small enough that passing it directly looks harmless.
 
 ## 9. Retention
 

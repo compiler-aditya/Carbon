@@ -187,6 +187,11 @@ Feature list, four lines, each a concrete capability rather than a benefit adjec
 
 Packages: Monthly, Annual (badge the annual saving), Lifetime. Restore purchases as a text link. Terms and Privacy links.
 
+Two copy constraints that are easy to get wrong in a dashboard editor:
+
+- **The saving is ~50%, and it must be computed, not typed.** $4.99 × 12 against $29.99 is 49.9%. Paywalls V2 derives this from the packages themselves — typing "Save 40%" (or any literal) into the badge is the same mistake as hardcoding a price, and it goes stale the moment pricing moves.
+- **The trial is Annual-only, so the button label cannot be "Start free trial" unconditionally.** It is wrong the instant someone selects Monthly or Lifetime — and Lifetime is a non-consumable that can never carry a trial. Either bind the label to the selected package's offer, or use one honest label for all three ("Continue") and let the Annual card carry the trial wording.
+
 ### 4.10 Settings
 
 Sections: **Usage** (`MeterBar`, records and templates this period, Pro status, Restore purchases) · **Storage** (total size, delete scan images for confirmed records) · **Extraction** (on-device intelligence status line, default date convention) · **Privacy** (a real paragraph: nothing leaves the device except RevenueCat's own SDK traffic) · **About** (version, GitHub link, licences).
@@ -225,7 +230,7 @@ Respect `accessibilityReduceMotion`: all values appear at once, rules render sta
 - Dynamic Type through accessibility3 on every screen, including the mono data style.
 - VoiceOver: `FieldRow` reads "Quantity, 14, high confidence" — **confidence must be spoken**, since the rule style is purely visual and it carries real information.
 - Confidence is never conveyed by colour alone: solid/dashed/dotted is the primary channel, colour is secondary, and `StampBadge` carries the word.
-- All contrast ≥ 4.5:1 for text. Check `inkMuted` on `paper` specifically — it is the one at risk.
+- All contrast ≥ 4.5:1 for text. **Checked:** every text token in §2 passes in both themes. `inkMuted` on `paper` — the pair flagged as at risk — is 5.9:1, and the tightest pair in the whole palette is `stamp` on `paper` at 5.2:1. Dark mode is more comfortable throughout (6.1:1 and above). No token needs adjusting; re-check only if a hue changes.
 - Minimum 44×44pt targets. Cell edit taps in `CellGrid` need care; expand the hit area beyond the visual cell.
 - Full keyboard support on iPad in `CellGrid`: Tab, Shift-Tab, arrows, Return to commit.
 
@@ -269,7 +274,7 @@ v0 produces React/Tailwind. You are using it to **see and iterate on the design*
 
 4. **Template editor** — "A sheet. At top, a small thumbnail of a scanned paper form. Then a name field, a subtitle field, and a two-option segmented control 'Record / Table' with one line of explanatory text under the selection. Then an uppercase section header 'FIELDS' with a trailing hairline running to the screen edge, and a reorderable list of five field rows, each with a label, a small outlined type chip ('Text', 'Date', 'Number', 'Currency'), and a drag handle. Below, an outlined 'Add field' row. Above it, a subtle accent-filled suggestion row: 'Use detected columns — 5 found'."
 
-5. **Paywall** — "Serif headline 'Carbon Pro'. One line of sans subtext. Four feature lines, each with a small outlined check: 'Unlimited templates', 'Unlimited records', 'CSV export', 'Everything stays on your device'. Three selectable price cards — Monthly, Annual (with a small outlined 'Save 40%' badge), Lifetime — all prices in mono, the Annual one selected with an accent border and accent fill. Full-width accent 'Start free trial' button. Small 'Restore purchases' text link, then tiny Terms and Privacy links."
+5. **Paywall** — "Serif headline 'Carbon Pro'. One line of sans subtext. Four feature lines, each with a small outlined check: 'Unlimited templates', 'Unlimited records', 'CSV export', 'Everything stays on your device'. Three selectable price cards — Monthly $4.99, Annual $29.99 (with a small outlined 'Save 50%' badge and a line reading '7-day free trial'), Lifetime $49.99 — all prices in mono, the Annual one selected with an accent border and accent fill. Full-width accent 'Continue' button. Small 'Restore purchases' text link, then tiny Terms and Privacy links."
 
 6. **Empty state** — "A centred empty state: a large thin outlined document icon, a serif headline 'No templates yet.', one line of sans body 'A template teaches Carbon the shape of one paper form. You'll only do this once per form.', a full-width accent 'Create your first template' button, and a secondary text button 'Use a sample form'."
 

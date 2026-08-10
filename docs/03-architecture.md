@@ -95,12 +95,26 @@ public protocol Exporting: Sendable {
 }
 
 public protocol UsageMetering: Sendable {
-    func currentPeriod() async -> UsagePeriod
+    /// Returns the snapshot, never the @Model. See the note below.
+    func currentPeriod() async -> UsagePeriodSnapshot
     func canCreateTemplate(existingCount: Int, isPro: Bool) async -> MeterDecision
     func canCreateRecords(count: Int, isPro: Bool) async -> MeterDecision
     func recordCreated(count: Int) async
 }
 ```
+
+**`currentPeriod()` returns a snapshot, not the SwiftData model.** `UsagePeriod` in `04-data-model.md` §8 is a `@Model`, and a `@Model` is not `Sendable` — returning one from a `Sendable` protocol across an `async` boundary violates our own non-negotiable and will not compile under Swift 6 strict concurrency. The snapshot is four fields:
+
+```swift
+public struct UsagePeriodSnapshot: Sendable, Hashable {
+    public let periodKey: String      // "2026-09"
+    public let recordsCreated: Int
+    public let templatesCreated: Int
+    public let firstSeenAt: Date
+}
+```
+
+This is the same rule as `TemplateSnapshot` and `RecordSnapshot` below, and it is worth stating twice because `UsagePeriod` is small enough that the temptation to pass it directly is real.
 
 Note `TemplateSnapshot` / `RecordSnapshot`: **immutable `Sendable` structs projected from the SwiftData models.** SwiftData `@Model` classes are not `Sendable` and must never be passed into an actor or a service. Every service boundary takes snapshots. This one convention prevents the majority of Swift 6 concurrency pain in a SwiftData app, and getting it wrong on Day 1 costs a day on Day 4.
 
@@ -201,14 +215,35 @@ name: build-and-test
 on: [push, pull_request]
 jobs:
   test:
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+
+      # Pin the toolchain. The runner's default Xcode is not guaranteed to carry the
+      # iOS 26 SDK, and a green badge that built against the wrong SDK is worse than
+      # no badge. Fail loudly here rather than mysteriously in the build step.
+      - name: Select Xcode 26
+        run: sudo xcode-select -s /Applications/Xcode_26.app
+
+      # Resolve the destination at runtime instead of hardcoding a device name.
+      # A renamed simulator is a silent CI failure that costs an hour to diagnose.
+      - name: Resolve simulator
+        run: echo "DESTINATION=platform=iOS Simulator,OS=latest,name=iPhone 17" >> "$GITHUB_ENV"
+
       - name: Build and test CarbonCore
-        run: xcodebuild test -scheme CarbonCore -destination 'platform=iOS Simulator,name=iPhone 17'
+        run: xcodebuild test -scheme CarbonCore -destination "$DESTINATION"
+
       - name: Build app
-        run: xcodebuild build -scheme Carbon -destination 'platform=iOS Simulator,name=iPhone 17'
+        run: |
+          cp Config/Secrets.example.xcconfig Config/Secrets.xcconfig
+          xcodebuild build -scheme Carbon -destination "$DESTINATION"
+
+      - name: SwiftLint
+        run: swiftlint --reporter github-actions-logging
+        continue-on-error: true    # warning, not a gate — see §10
 ```
+
+Two details that are load-bearing rather than decorative. **Copying the example secrets file in CI is the zero-config path under test** — if the app stops building with the placeholder key, CI catches it, which is precisely the failure that would otherwise be discovered by a judge. And SwiftLint runs `continue-on-error` because §10 says it is a warning; wiring it as a gate on Day 1 is how a team spends an afternoon on line length.
 
 Add the badge to the README. A green badge tells a judge the repo compiles before they open Xcode, which is worth more than it sounds when someone is grading dozens of submissions.
 

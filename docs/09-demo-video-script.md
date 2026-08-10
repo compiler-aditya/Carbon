@@ -55,14 +55,16 @@ Zoom the grid. Three cells sit on dotted red rules. Tap one → the source image
 *Do not hide the failures — feature them. Every competing entry will demo perfect extraction on synthetic data. Showing a real miss, and a one-tap fix, is more convincing than a flawless demo and it is the reason the correction editor exists. It also matches the accuracy numbers in the README, which is coherence a judge will notice.*
 
 ### 0:58–1:10 · The dataset accumulates
-**Save 14 records** → the dataset screen, scrolled, showing a few hundred existing rows across several days. Search a term, one result. This must not be an empty demo account — populate it beforehand with believable data.
+**Save 14 records** → the dataset screen, scrolled, showing a few hundred existing rows **accumulated over several months**. Search a term, one result. This must not be an empty demo account — populate it beforehand with believable data.
 
 > **VO:** "It builds up as one dataset. Searchable, sorted, on the device."
 
 *`Test Item 1` anywhere in this shot costs more than a missing feature. Real-looking data is a production requirement.*
 
+**Seed the demo account so the free tier actually adds up.** The free tier is one template and twenty records *per calendar month* — so a dataset holding hundreds of rows has to have been built over months, not days, or the arithmetic on screen contradicts the README and the paywall beat that follows. Set the device up so the **current** month holds six records before this shot. Saving 14 then lands the meter on exactly 20 of 20, on camera, immediately before the export gate. That is not a workaround: a meter visibly filling to its limit and *then* the gate is a stronger, more legible version of the next beat than a lock appearing out of nowhere. Judges at a monetization company will do this arithmetic.
+
 ### 1:10–1:24 · The money moment
-Tap **Export** → the lock and the meter are visible → paywall appears → select **Annual** → purchase completes → the sheet dismisses → **the export automatically continues** → share sheet → CSV opens in Numbers with the correct columns and typed values.
+Tap **Export** → the lock and the meter — now reading 20 of 20 — are visible → paywall appears → select **Annual** → purchase completes → the sheet dismisses → **the export automatically continues** → share sheet → CSV opens in Numbers with the correct columns and typed values.
 
 > **VO:** "Free covers one form and twenty records a month. Export is where Pro starts."
 
@@ -103,6 +105,7 @@ Final frame, held two seconds: app name, one line — *Your form, remembered.* �
 - [ ] Every shown feature exists in `main`
 - [ ] No copyrighted music, no third-party logos in any frame
 - [ ] Real device footage, real data, no `Test Item`
+- [ ] Free-tier numbers on screen agree with the README: one template, 20 records in the current month, meter at 20 of 20 before the export gate
 - [ ] Purchase flow shown end to end, with the automatic retry visible
 - [ ] Confidence rules legible at 720p on a phone screen
 - [ ] Burned-in captions

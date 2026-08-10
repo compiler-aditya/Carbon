@@ -47,6 +47,8 @@ It also shows higher-priced apps converting downloads about 2× better than low-
 - **7-day free trial on Annual only.** Trial on the annual package is the standard high-converting configuration and it makes the annual card the obvious choice.
 - Lifetime exists for two reasons: prosumers with an aversion to subscriptions convert on it, and having a non-consumable alongside subscriptions demonstrates packaging thinking rather than a single-product wire-up. Mention it in the Devpost description.
 - Prices are configured in the dashboard; **never hardcode a price string in the app.** Read from the `Package`'s localized price. A hardcoded price in a paywall is an instant tell.
+- The same rule covers the **saving badge**: $4.99 × 12 against $29.99 is 49.9%, so the badge reads ~50% — and it should be derived from the packages rather than typed, for the same reason the price is. `05-uiux-spec.md` §4.9 carries the paywall-side wording.
+- Because the trial is Annual-only, **the call-to-action cannot say "Start free trial" for all three packages.** Lifetime is a non-consumable and can never carry one. Bind the label to the selected package, or use a neutral label and let the Annual card carry the trial line.
 
 ## 3. RevenueCat dashboard configuration
 

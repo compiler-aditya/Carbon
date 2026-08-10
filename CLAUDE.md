@@ -24,7 +24,7 @@ In `docs/`, in this order:
 | `06-revenuecat-spec.md` | Entitlements, offerings, gating matrix, purchase edge cases |
 | `07-build-plan.md` | Day-by-day plan, cut order, definition of done |
 
-Design mockups are in `docs/design/` as PNGs. **Build SwiftUI from the mockups plus `05-uiux-spec.md`, never by transliterating web idioms** — no hover states, no web nav patterns, no CSS-transition equivalents. Match layout, hierarchy and tokens; use native patterns for everything else.
+Design mockups belong in `docs/design/` as PNGs — the directory exists but is **empty until the v0 prompt pack in `05-uiux-spec.md` §9 has been run**, so until then `05-uiux-spec.md` is the only design source. **Build SwiftUI from the mockups plus `05-uiux-spec.md`, never by transliterating web idioms** — no hover states, no web nav patterns, no CSS-transition equivalents. Match layout, hierarchy and tokens; use native patterns for everything else.
 
 ## Non-negotiables
 
@@ -64,7 +64,7 @@ A feature is not done until all eight are true:
 ## Working with me on this
 
 - **Ask before adding scope.** If a task implies a feature not in `01-idea-brief.md` §6, say so instead of building it. The Out list there is a decision, not an oversight.
-- **Flag API uncertainty rather than guessing.** Several APIs here are recent and the sources disagree on availability annotations — `RecognizeDocumentsRequest` in particular. Check the installed SDK, and if it differs from the spec, tell me and update the doc.
+- **Flag API uncertainty rather than guessing.** Several APIs here are recent. Check the installed SDK, and if it differs from the spec, tell me and update the doc. Already verified against Xcode 26.6 / Swift 6.3.3 / iOS SDK 26.5, so do not re-litigate these: `RecognizeDocumentsRequest` and `DocumentObservation` are **iOS 26.0+** (not 18); SwiftData's `#Index` exists in the form `04-data-model.md` uses; and Tier 2 must build its output schema with `DynamicGenerationSchema` at runtime, **not** `@Generable`/`@Guide`, because a macro cannot describe a user-defined template — see `02-system-design.md` Stage 2.
 - **Prefer deleting to commenting out.** Git has the history.
 - **When a spec is ambiguous, propose the smaller interpretation** and note the alternative. On a 7-day build the cheap wrong choice is recoverable; the expensive one is not.
 - Do not write a migration, a sync engine, an analytics layer, or a networking layer. None is in scope.

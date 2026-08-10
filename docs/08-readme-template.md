@@ -81,13 +81,13 @@ Without a key the app treats you as a free-tier user and everything except purch
 Fully on-device. No server, no account, no network call in the critical path. The only outbound traffic in the app is the RevenueCat SDK.
 
 ```
-VisionKit          →  Vision                     →  FoundationModels    →  SwiftData
-document camera       RecognizeDocumentsRequest      text-only mapping      local store
-(edge detect,         (native table/row/column       of unresolved fields   + JPEG on disk
- dewarp, multipage)    detection, on-device)         (@Generable output)
+VisionKit          →  Vision                     →  FoundationModels     →  SwiftData
+document camera       RecognizeDocumentsRequest      text-only mapping       local store
+(edge detect,         (native table/row/column       of unresolved fields    + JPEG on disk
+ dewarp, multipage)    detection, on-device)         (runtime schema)
 ```
 
-**Extraction runs a three-tier ladder.** Tier 1 is deterministic Swift — table header matching in table mode, label-anchored proximity in record mode. It resolves most values on printed forms in under 100 ms with no model at all. Tier 2 sends only the *unresolved* fields to Apple's on-device model with `@Generable` structured output, a hard timeout, and a token budget. Tier 3 returns the field empty and marks it for review. Every value carries its tier and a confidence score, and the UI shows both.
+**Extraction runs a three-tier ladder.** Tier 1 is deterministic Swift — table header matching in table mode, label-anchored proximity in record mode. It resolves most values on printed forms in under 100 ms with no model at all. Tier 2 sends only the *unresolved* fields to Apple's on-device model with structured output, a hard timeout, and a token budget. Because the fields are defined by the user at runtime rather than at compile time, the output schema is built per template with `DynamicGenerationSchema` instead of the `@Generable` macro — the macro cannot describe a shape that does not exist until someone makes a template. Tier 3 returns the field empty and marks it for review. Every value carries its tier and a confidence score, and the UI shows both.
 
 **Why the model gets text and not images.** Foundation Models gained image input in iOS 27, which was still in beta while this was built. Depending on it would have meant anyone running this repo needed a beta OS. So Vision — stable since iOS 26, with native table detection — does the layout work, and the model does text-to-schema mapping only. The image-input path exists behind an availability check as an enhancement, not a dependency. Choosing the stable API and being able to say why felt more useful than shipping against a beta.
 

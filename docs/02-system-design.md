@@ -65,17 +65,21 @@ struct RecognizedPage: Sendable {
 struct RecognizedTable: Sendable {
     let frame: NormalizedRect
     let rows: [[RecognizedCell]]       // row-major; ragged rows allowed
-    let headerRowIndex: Int?           // best guess, may be nil
+    let headerRowIndex: Int?           // our own inference — Vision does not label one
 }
 
 struct RecognizedCell: Sendable {
     let text: String
     let frame: NormalizedRect
-    let recognitionConfidence: Float   // from Vision
+    let rowRange: ClosedRange<Int>     // spans, straight from Vision — a merged cell
+    let columnRange: ClosedRange<Int>  // covers more than one row or column
+    let recognitionConfidence: Double  // derived, see below
 }
 ```
 
-- **Availability caveat to verify on Day 1:** confirm the exact `@available` annotation on `RecognizeDocumentsRequest` in the installed SDK before building on it. Sources disagree on whether it is iOS 18+ or iOS 26+. Whatever it says, put the answer in the README. If it turns out to be unavailable on our floor, the Tier-2 fallback below becomes the primary path and the deadline is unaffected — this is why the ladder exists.
+- **Carry the cell spans.** Vision's `DocumentObservation.Container.Table.Cell` exposes `rowRange` and `columnRange`, so merged cells are described for us at no cost. Flattening a cell to `(text, frame)` throws that away and is exactly why merged cells are a known failure mode. Keep the ranges in the DTO even if Tier 1 initially ignores anything with a span greater than one.
+- **Cell confidence has to be derived.** `Table.Cell` is a plain value type with no `confidence` — it is not a `VisionObservation`. Its text arrives through `cell.content.text.lines`, which *are* `RecognizedTextObservation` and do carry `confidence: Float`. Take the minimum across the cell's lines (a cell is only as trustworthy as its worst line) and widen to `Double` at this boundary so nothing downstream mixes precisions.
+- **Availability, verified.** `RecognizeDocumentsRequest` and `DocumentObservation` are annotated `@available(macOS 26.0, iOS 26.0, tvOS 26.0, visionOS 26.0, *)` in the installed SDK — checked against Xcode 26.6 / Swift 6.3.3 / iOS SDK 26.5. The iOS 18 figure that circulates in some sources is wrong. Our iOS 26 floor is therefore exactly right and the API is available on it. The Tier-2 fallback below stays in the codebase regardless: it costs little and it is the honest answer for a bad photograph, not just for a missing API.
 
 ### Stage 2 — Structured extraction
 Turn a `RecognizedPage` plus a `FormTemplate` into `[ExtractedRecord]`.
@@ -91,14 +95,52 @@ Pure Swift, no model. Fast, free, fully testable, and correct for the common cas
 **Tier 2 — Model-assisted (runs only for fields Tier 1 left empty or low-confidence).**
 - **API:** FoundationModels, `SystemLanguageModel` + `LanguageModelSession`, **text only**.
 - The prompt receives: the template schema (field labels and types), the page's `fullText`, and the specific fields still needing values. Never the image — see `01-idea-brief.md` §7.
-- Output is constrained with `@Generable` / `@Guide` so the model returns typed Swift structs, not prose to parse. Constrain enumerated fields with `@Guide(.anyOf(choices))`.
+- **Output is constrained by a schema built at runtime, not by `@Generable`.** This is the one place where the obvious API is the wrong one, so it is worth being explicit: `@Generable` and `@Guide` are macros, and a macro needs the shape at compile time. Carbon's fields are declared by the user, in the app, at runtime — there is no static Swift struct to attach them to. The working path is:
+
+```swift
+// One property per unresolved field. Choice fields get the runtime equivalent of
+// @Guide(.anyOf(choices)); everything else is a free string that normalization types.
+let properties = unresolvedFields.map { field -> DynamicGenerationSchema.Property in
+    let valueSchema = field.choices.isEmpty
+        ? DynamicGenerationSchema(type: String.self)
+        : DynamicGenerationSchema(name: field.key, anyOf: field.choices)
+    return DynamicGenerationSchema.Property(
+        name: field.key,
+        description: field.label,   // the human label is the only hint the model gets
+        schema: valueSchema,
+        isOptional: true            // "not on the page" must be expressible
+    )
+}
+
+let schema = try GenerationSchema(
+    root: DynamicGenerationSchema(name: "Record", properties: properties),
+    dependencies: []
+)
+
+let content = try await session.respond(to: prompt, schema: schema).content
+let raw = try content.value(String?.self, forProperty: field.key)
+```
+
+  The response is `GeneratedContent`, not a typed struct, so values come out by key through `value(_:forProperty:)` and go straight into normalization exactly as Tier 1's do. Everything downstream is unchanged, because every tier already converges on `ExtractedValue`.
+- **Mark every property optional.** A field genuinely absent from the page is the common case, and a schema that forces a value is a schema that invites an invented one. Absent → Tier 3, which is a normal outcome.
+- Build the schema **once per template** and cache it. Rebuilding it per page is measurable waste on a 14-row register.
 - **Bounded:** one session per page, a hard timeout (default 8s), and a token budget. On timeout or refusal, fall through to Tier 3 for the remaining fields. The model is never allowed to block the UI or the pipeline.
 - Values carry `source: .model` and confidence from the model's own reporting, clamped to a maximum below the deterministic ceiling — we trust a matched column header more than a model inference, and the UI should reflect that.
 
 **Tier 3 — Unresolved.**
 The field is returned empty with `source: .unresolved`, confidence 0. It renders in the review UI as an empty field on a dotted red rule, focused first. This is a normal outcome, not an error, and the copy must not treat it as a failure.
 
-**Availability gate.** `SystemLanguageModel.default.availability` must be checked before Tier 2 and the result cached. On unsupported hardware, in an unsupported region, or with Apple Intelligence disabled, the app runs Tier 1 → Tier 3 and shows a one-line, non-blocking note in Settings explaining that on-device intelligence is unavailable and extraction is using layout matching only. **The app must be fully usable in this state.** Test this path explicitly — a judge on a simulator or an older device will hit it.
+**Availability gate.** `SystemLanguageModel.default.availability` must be checked before Tier 2 and the result cached. It is `.available` or `.unavailable(reason)`, and the reason has exactly three cases in the SDK — mirror them in `ModelUnavailableReason` and do not invent a fourth:
+
+```swift
+case deviceNotEligible            // hardware cannot run the model
+case appleIntelligenceNotEnabled  // user has not turned it on
+case modelNotReady                // still downloading — worth re-checking later
+```
+
+**Language support is a separate gate, not an availability case.** There is no "unsupported region" reason. Coverage is checked with `SystemLanguageModel.default.supportsLocale(_:)` against `supportedLanguages`, and it can be false while availability is perfectly `.available`. Treat it as its own fourth condition in our own enum, because the user-facing sentence differs: one says the feature is off, the other says this language is not covered yet.
+
+In any of these states the app runs Tier 1 → Tier 3 and shows a one-line, non-blocking note in Settings explaining that on-device intelligence is unavailable and extraction is using layout matching only. **The app must be fully usable in this state.** Test this path explicitly — a judge on a simulator or an older device will hit it. Note that `modelNotReady` is the one case worth re-checking on a later capture rather than caching for the session.
 
 ### Stage 3 — Normalization
 Runs on every value regardless of tier, so behaviour is identical across tiers:
@@ -168,17 +210,16 @@ enum CarbonError: Error, Equatable {
     case modelUnavailable(reason: ModelUnavailableReason)
     case modelTimedOut
     case exportFailed(underlying: String)
-    case templateLimitReached            // meter, not an error — routes to paywall
-    case recordLimitReached              // meter, not an error — routes to paywall
 }
 ```
+
+**Meter limits are deliberately not in this enum.** Reaching the free-tier template or record limit is a normal, expected outcome of using the app, and modelling it as an error is how a paywall ends up presented as an alert — the worst available paywall UX. Limits are a `MeterDecision` (`.allowed` / `.paywall(reason:)` / `.partial(allowed:)`) returned from `UsageMetering`, and they route to the paywall. See `06-revenuecat-spec.md` §6. Nothing in the app should be able to `throw` a limit.
 
 Copy rules, per the design skill: state what happened and what to do, in the interface's voice, no apology, never vague.
 
 - `noTableFound` → **"No table found on this page."** / "This template expects a table. Try a straighter photo, or switch the template to single-record mode."
 - `noFieldsMatched` → **"Nothing matched this template."** / "This may be a different form. Choose another template, or scan again."
 - `modelUnavailable` → not an error dialog at all. A single line in Settings. Extraction continues.
-- `templateLimitReached` / `recordLimitReached` → never an alert. These present the paywall.
 
 ## 6. Privacy posture
 
@@ -197,8 +238,9 @@ This is a genuine differentiator, so it must be true and it must be stated preci
 |---|---|
 | No camera (simulator) | Photo-library import path, plus a bundled sample form so the app is explorable on a simulator. **A judge may well run this on a simulator — this row is load-bearing.** |
 | Camera permission denied | Empty state with a Settings deep link |
-| Apple Intelligence unavailable / unsupported region / disabled | Tier 1 → Tier 3 only; note in Settings; app fully usable |
-| `RecognizeDocumentsRequest` unavailable | Fall back to `RecognizeTextRequest` + our own row grouping by y-frame clustering. Lower quality, still functional. Keep this code even if unused — it is the honest fallback and it is cheap. |
+| Apple Intelligence ineligible hardware / not enabled / model still downloading | Tier 1 → Tier 3 only; note in Settings; app fully usable |
+| Device language not in `supportedLanguages` | Same behaviour, different sentence in Settings. Separate check via `supportsLocale(_:)` — see Stage 2. |
+| `RecognizeDocumentsRequest` returns nothing useful on a page | Fall back to `RecognizeTextRequest` + our own row grouping by y-frame clustering. Lower quality, still functional. The API itself is present on our whole deployment target (iOS 26+, verified), so this is a bad-photograph path rather than an availability path — which is the more common failure anyway, and it is cheap to keep. |
 | No network | Everything works. RevenueCat serves cached `CustomerInfo`; entitlement state persists. |
 | RevenueCat unreachable on first launch | Treat as free tier, do not block the app, retry in background. **Never** hard-gate app entry on a network call. |
 | Zero templates | Onboarding empty state that creates the first template |
