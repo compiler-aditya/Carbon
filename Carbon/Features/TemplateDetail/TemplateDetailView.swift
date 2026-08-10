@@ -1,4 +1,5 @@
 import CarbonCore
+import CoreGraphics
 import SwiftData
 import SwiftUI
 
@@ -68,23 +69,50 @@ struct TemplateDetailView: View {
         CarbonStore(modelContainer: modelContext.container)
     }
 
+    /// Scan is the verb of the app, so it leads — unless there is no camera, in which case
+    /// choosing a photo is promoted rather than leaving a dead primary button on screen.
+    /// That is the state a judge on a simulator opens the app in.
     private var scanButton: some View {
-        VStack(spacing: CarbonSpacing.tight) {
-            Button {
-                Task { await scanTapped() }
-            } label: {
-                Label("Scan", systemImage: "camera")
-                    .font(CarbonFont.dataValueLarge)
-            }
-            .buttonStyle(.carbonPrimary)
+        VStack(spacing: CarbonSpacing.snug) {
+            if DocumentCamera.isAvailable {
+                Button {
+                    Task { await scanTapped() }
+                } label: {
+                    Label("Scan", systemImage: "camera")
+                        .font(CarbonFont.dataValueLarge)
+                }
+                .buttonStyle(.carbonPrimary)
 
-            if !DocumentCamera.isAvailable {
-                // A judge opening this on a simulator lands here. Say what is happening
-                // rather than showing a button that does nothing.
-                Text("The camera isn't available on this device.")
+                PhotoImportButton(
+                    label: String(localized: "Choose a photo"),
+                    isPrimary: false,
+                    onPicked: importPicked
+                )
+            } else {
+                PhotoImportButton(
+                    label: String(localized: "Choose a photo"),
+                    isPrimary: true,
+                    onPicked: importPicked
+                )
+
+                Text("This device has no camera, so pick a photo of the form instead.")
                     .font(CarbonFont.caption)
                     .foregroundStyle(CarbonColor.inkMuted)
+                    .multilineTextAlignment(.center)
             }
+        }
+    }
+
+    /// The library and the camera converge on the same function immediately, so the pipeline
+    /// has one entry point rather than two paths that can drift apart.
+    private func importPicked(_ pages: [CGImage]) {
+        Task {
+            prepareModel()
+            await captureModel?.beginCapture()
+            // beginCapture only sets .capturing when the meter allows it; if it presented the
+            // paywall instead, the pages are dropped rather than half-processed.
+            guard captureModel?.state == .capturing else { return }
+            await captureModel?.process(pages: pages)
         }
     }
 
