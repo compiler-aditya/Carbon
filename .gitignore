@@ -45,3 +45,6 @@ playground.xcworkspace
 .LSOverride
 Icon?
 ._*
+
+# Harness output — the numbers belong in the README, pasted deliberately.
+accuracy.md
