@@ -1,0 +1,11 @@
+// Base build settings for the Carbon app target.
+//
+// The placeholder is defined FIRST and the real key file is included AFTER, so a local
+// Secrets.xcconfig overrides it when present and the build works untouched when it is not.
+// A fresh clone with no Secrets.xcconfig must build and run — that is the zero-config path a
+// judge takes, and it is a hard requirement.
+
+REVENUECAT_API_KEY = test_REPLACE_ME
+
+// Optional include. The `?` is what keeps a clone without this file building.
+#include? "Secrets.xcconfig"
