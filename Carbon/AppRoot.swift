@@ -9,7 +9,47 @@ import SwiftUI
 ///
 /// The real screens land next; this is the shell that proves the wiring.
 struct AppRoot: View {
+    /// Shown once. Skipping counts as seeing it — someone who skipped does not want it again.
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+
+    @Environment(\.services) private var services
+    @Environment(\.modelContext) private var modelContext
+
+    @State private var isInstallingSample = false
+
     var body: some View {
+        if hasSeenOnboarding {
+            tabs
+        } else {
+            OnboardingView(
+                onCreateOwn: { hasSeenOnboarding = true },
+                onUseSample: { sample in Task { await install(sample) } },
+                onSkip: { hasSeenOnboarding = true }
+            )
+            .overlay {
+                if isInstallingSample {
+                    ProcessingView(step: .reading, pageIndex: 0, total: 1)
+                }
+            }
+        }
+    }
+
+    /// Runs the real pipeline over the bundled photograph, then drops the user into the app
+    /// with a template and a dataset already in it.
+    private func install(_ sample: SampleFormLibrary.Sample) async {
+        isInstallingSample = true
+        defer {
+            isInstallingSample = false
+            hasSeenOnboarding = true
+        }
+        _ = try? await SampleFormInstaller.install(
+            sample,
+            services: services,
+            store: CarbonStore(modelContainer: modelContext.container)
+        )
+    }
+
+    private var tabs: some View {
         TabView {
             Tab("Templates", systemImage: "doc.text") {
                 NavigationStack { TemplateListView() }

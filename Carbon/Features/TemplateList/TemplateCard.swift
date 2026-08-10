@@ -33,7 +33,9 @@ struct TemplateCard: View {
                 .foregroundStyle(CarbonColor.ink)
 
             if let lastUsedAt = template.lastUsedAt {
-                Text(lastUsedAt.formatted(.relative(presentation: .numeric)))
+                // .named rather than .numeric: a template used a moment ago should read
+                // "now", not "in 0 seconds".
+                Text(lastUsedAt.formatted(.relative(presentation: .named)))
                     .font(CarbonFont.caption)
                     .foregroundStyle(CarbonColor.inkMuted)
             }
