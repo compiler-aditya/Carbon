@@ -12,16 +12,25 @@ struct SettingsView: View {
     @State private var isShowingPaywall = false
     @State private var restoreOutcome: RestoreOutcome?
     @State private var modelState: ModelAvailability.State?
+    @State private var usage: UsagePeriodSnapshot?
+    @State private var templateCount = 0
+    @State private var storageBytes = 0
+    @State private var purgeableRecords = 0
+    @State private var exportSummary: ExportSummary = .empty
+    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         List {
+            usageSection
             proSection
+            storageSection
             extractionSection
             privacySection
             aboutSection
         }
         .task {
             modelState = await ModelAvailability().state()
+            await loadUsage()
         }
         .sheet(isPresented: $isShowingPaywall) {
             // Presented from the action, never from the app root. The user sees the paywall
@@ -57,6 +66,74 @@ struct SettingsView: View {
                 .foregroundStyle(.secondary)
             }
         }
+    }
+
+    /// What the free tier has left. Shown to everyone: a Pro user sees what they are getting,
+    /// and a free user sees where they stand before they hit a wall rather than at it.
+    @ViewBuilder
+    private var usageSection: some View {
+        if !services.entitlements.isPro {
+            Section("Usage") {
+                MeterBar(
+                    label: String(localized: "Templates"),
+                    used: templateCount,
+                    limit: FreeTierLimit.templates
+                )
+                MeterBar(
+                    label: String(localized: "Records this month"),
+                    used: usage?.recordsCreated ?? 0,
+                    limit: FreeTierLimit.recordsPerPeriod
+                )
+            }
+        }
+    }
+
+    /// Storage. Shows the number and offers the choice — v1 never auto-purges someone's
+    /// source images.
+    private var storageSection: some View {
+        Section("Storage") {
+            LabeledContent("Scans on this device", value: formattedBytes)
+
+            if exportSummary.exportCount > 0 {
+                LabeledContent(
+                    "Exported",
+                    value: "\(exportSummary.exportCount) files, \(exportSummary.recordCount) records"
+                )
+            }
+
+            Button("Delete images for \(purgeableRecords) confirmed records") {
+                Task { await purgeImages() }
+            }
+            .disabled(purgeableRecords == 0)
+
+            Text(
+                "Records you've already checked keep their data. "
+                    + "Anything still needing review keeps its photo."
+            )
+            .font(CarbonFont.caption)
+            .foregroundStyle(CarbonColor.inkMuted)
+        }
+    }
+
+    private var formattedBytes: String {
+        storageBytes.formatted(.byteCount(style: .file))
+    }
+
+    private var store: CarbonStore {
+        CarbonStore(modelContainer: modelContext.container)
+    }
+
+    private func loadUsage() async {
+        usage = await services.meter.currentPeriod()
+        templateCount = (try? await store.templateCount()) ?? 0
+        storageBytes = (try? await services.pageStore.totalBytes()) ?? 0
+        purgeableRecords = (try? await store.confirmedRecordsWithImages()) ?? 0
+        exportSummary = (try? await store.exportSummary()) ?? .empty
+    }
+
+    private func purgeImages() async {
+        try? await store.purgeImagesForConfirmedRecords(pageStore: services.pageStore)
+        await loadUsage()
     }
 
     /// One line, never an alert, and never blocking anything.
