@@ -16,11 +16,13 @@ struct TemplateDetailView: View {
     @State private var reviewRecordIDs: [UUID] = []
     @State private var isShowingCamera = false
     @State private var isShowingPaywall = false
+    @State private var recordCount = 0
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: CarbonSpacing.loose) {
                 scanButton
+                recordsSection
                 fieldsSection
             }
             .padding(CarbonSpacing.regular)
@@ -47,7 +49,17 @@ struct TemplateDetailView: View {
             }
         }
         .navigationDestination(isPresented: hasReview) {
-            if let first = reviewRecordIDs.first {
+            // A table page produces many rows and belongs in the grid; a record page produces
+            // one and belongs in the field list. Routing on the template's declared mode
+            // rather than on how many records came back keeps a one-row register in the grid,
+            // where the user expects it.
+            if template.mode == .table {
+                TableReviewView(
+                    model: TableReviewModel(
+                        store: store, template: template, recordIDs: reviewRecordIDs
+                    )
+                )
+            } else if let first = reviewRecordIDs.first {
                 ReviewView(
                     model: ReviewModel(store: store, template: template, recordID: first)
                 )
@@ -62,7 +74,15 @@ struct TemplateDetailView: View {
         .onChange(of: captureModel?.paywallReason) { _, newValue in
             isShowingPaywall = newValue != nil
         }
-        .task { prepareModel() }
+        .task {
+            prepareModel()
+            await refreshRecordCount()
+        }
+        // The snapshot this screen was handed is a point-in-time copy, so the count has to be
+        // re-read rather than trusted after a capture writes new rows.
+        .onChange(of: reviewRecordIDs) { _, _ in
+            Task { await refreshRecordCount() }
+        }
     }
 
     private var store: CarbonStore {
@@ -116,6 +136,33 @@ struct TemplateDetailView: View {
         }
     }
 
+    private var recordsSection: some View {
+        NavigationLink {
+            DatasetView(model: DatasetModel(store: store, template: template))
+        } label: {
+            HStack {
+                Text("View all records")
+                    .font(CarbonFont.body)
+                    .foregroundStyle(CarbonColor.carbon)
+                Spacer()
+                Text("\(recordCount) records")
+                    .font(CarbonFont.dataValue)
+                    .foregroundStyle(CarbonColor.inkMuted)
+                Image(systemName: "chevron.right")
+                    .font(CarbonFont.caption)
+                    .foregroundStyle(CarbonColor.inkMuted)
+            }
+            .padding(CarbonSpacing.regular)
+            .background(CarbonColor.paperRaised)
+            .clipShape(RoundedRectangle(cornerRadius: CarbonRadius.card))
+            .overlay {
+                RoundedRectangle(cornerRadius: CarbonRadius.card)
+                    .stroke(CarbonColor.rule.opacity(0.5), lineWidth: 1)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
     private var fieldsSection: some View {
         VStack(alignment: .leading, spacing: CarbonSpacing.snug) {
             SectionHeader("Fields")
@@ -157,6 +204,10 @@ struct TemplateDetailView: View {
     private func prepareModel() {
         guard captureModel == nil else { return }
         captureModel = CaptureModel(services: services, store: store, template: template)
+    }
+
+    private func refreshRecordCount() async {
+        recordCount = (try? await store.recordCounts(templateID: template.id)[.all]) ?? 0
     }
 
     private func scanTapped() async {

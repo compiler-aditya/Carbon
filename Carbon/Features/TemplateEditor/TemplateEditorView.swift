@@ -17,6 +17,7 @@ struct TemplateEditorView: View {
     @State private var newFieldLabel = ""
     @State private var newFieldType: FieldType = .text
     @State private var isSaving = false
+    @FocusState private var isAddFieldFocused: Bool
 
     var body: some View {
         NavigationStack {
@@ -85,6 +86,8 @@ struct TemplateEditorView: View {
     private var addFieldRow: some View {
         HStack(spacing: CarbonSpacing.tight) {
             TextField("Add a field", text: $newFieldLabel)
+                .focused($isAddFieldFocused)
+                .submitLabel(.next)
                 .onSubmit(addField)
 
             Picker("Type", selection: $newFieldType) {
@@ -127,6 +130,10 @@ struct TemplateEditorView: View {
         fields.append(NewFieldSpec(label: label, type: newFieldType))
         newFieldLabel = ""
         newFieldType = .text
+
+        // Setting up a register means declaring four or five fields in a row. Handing focus
+        // straight back turns that into continuous typing instead of a tap between each one.
+        isAddFieldFocused = true
     }
 
     private func save() async {
