@@ -22,7 +22,7 @@ struct AppRoot: View {
             }
             Tab("Settings", systemImage: "gearshape") {
                 NavigationStack {
-                    SettingsPlaceholder()
+                    SettingsView()
                         .navigationTitle("Settings")
                 }
             }
@@ -48,31 +48,6 @@ struct AppRoot: View {
                         .font(.system(.caption, design: .monospaced))
                         .foregroundStyle(.secondary)
                 }
-            }
-        }
-    }
-}
-
-/// Placeholder for the Settings screen. Shows the two things that are already true and worth
-/// verifying on a device: where data goes, and whether a purchase key is configured.
-private struct SettingsPlaceholder: View {
-    @Environment(\.services) private var services
-
-    var body: some View {
-        List {
-            Section("Privacy") {
-                Text(
-                    "Photographs and extracted values never leave this device. "
-                        + "The only outbound traffic is RevenueCat's own SDK."
-                )
-                .font(.callout)
-            }
-            Section("About") {
-                LabeledContent("Version", value: AppConfig.version)
-                LabeledContent(
-                    "Purchases",
-                    value: AppConfig.isUsingPlaceholderKey ? "Not configured" : "Configured"
-                )
             }
         }
     }

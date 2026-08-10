@@ -1,5 +1,5 @@
 import CarbonCore
-import CarbonTestFixtures
+import RevenueCat
 import SwiftData
 import SwiftUI
 
@@ -19,11 +19,36 @@ struct CarbonApp: App {
         }
     }()
 
+    init() {
+        Self.configurePurchases()
+    }
+
     var body: some Scene {
         WindowGroup {
             AppRoot()
-                .environment(\.services, .preview())
+                .environment(\.services, .live())
         }
         .modelContainer(container)
+    }
+
+    /// Configures RevenueCat, or deliberately does not.
+    ///
+    /// With no key — which is what a fresh clone has — the SDK is never configured at all.
+    /// Handing it a placeholder would make every later call fail slowly instead of the app
+    /// simply knowing it has no store. Nothing else depends on this succeeding: capture,
+    /// extraction, review, the dataset and export all work either way.
+    ///
+    /// Nothing is awaited here. Entitlement state resolves asynchronously and the first paint
+    /// never waits on it.
+    private static func configurePurchases() {
+        guard !AppConfig.isUsingPlaceholderKey else { return }
+
+        // .debug locally if you need it, never .verbose in a committed default.
+        Purchases.logLevel = .info
+        Purchases.configure(
+            with: Configuration.Builder(withAPIKey: AppConfig.revenueCatAPIKey)
+                .with(storeKitVersion: .storeKit2)
+                .build()
+        )
     }
 }

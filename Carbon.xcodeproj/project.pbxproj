@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		CA0000000000000000000014 /* CarbonCore in Frameworks */ = {isa = PBXBuildFile; productRef = CA0000000000000000000012 /* CarbonCore */; };
 		CA0000000000000000000015 /* CarbonTestFixtures in Frameworks */ = {isa = PBXBuildFile; productRef = CA0000000000000000000013 /* CarbonTestFixtures */; };
+		CA000000000000000000001C /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = CA000000000000000000001A /* RevenueCat */; };
+		CA000000000000000000001D /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = CA000000000000000000001B /* RevenueCatUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,6 +47,8 @@
 			files = (
 				CA0000000000000000000014 /* CarbonCore in Frameworks */,
 				CA0000000000000000000015 /* CarbonTestFixtures in Frameworks */,
+				CA000000000000000000001C /* RevenueCat in Frameworks */,
+				CA000000000000000000001D /* RevenueCatUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -99,6 +103,8 @@
 			packageProductDependencies = (
 				CA0000000000000000000012 /* CarbonCore */,
 				CA0000000000000000000013 /* CarbonTestFixtures */,
+				CA000000000000000000001A /* RevenueCat */,
+				CA000000000000000000001B /* RevenueCatUI */,
 			);
 			productName = Carbon;
 			productReference = CA0000000000000000000005 /* Carbon.app */;
@@ -131,6 +137,7 @@
 			packageReferences = (
 				CA0000000000000000000010 /* XCLocalSwiftPackageReference "Packages/CarbonCore" */,
 				CA0000000000000000000011 /* XCLocalSwiftPackageReference "Packages/CarbonTestFixtures" */,
+				CA000000000000000000001E /* XCRemoteSwiftPackageReference "purchases-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CA0000000000000000000003 /* Products */;
@@ -310,6 +317,17 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		CA000000000000000000001E /* XCRemoteSwiftPackageReference "purchases-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		CA0000000000000000000012 /* CarbonCore */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -318,6 +336,16 @@
 		CA0000000000000000000013 /* CarbonTestFixtures */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = CarbonTestFixtures;
+		};
+		CA000000000000000000001A /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CA000000000000000000001E /* XCRemoteSwiftPackageReference "purchases-ios" */;
+			productName = RevenueCat;
+		};
+		CA000000000000000000001B /* RevenueCatUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CA000000000000000000001E /* XCRemoteSwiftPackageReference "purchases-ios" */;
+			productName = RevenueCatUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
