@@ -5,12 +5,9 @@ import RevenueCat
 extension Services {
     /// The service set the running app uses.
     ///
-    /// Capture, recognition, extraction, normalization and storage are all live. Two remain
-    /// fakes and are called out rather than hidden:
-    ///
-    /// - `exporter` — CSV with full RFC-4180 handling is not written yet.
-    /// - `meter` — counts are in memory, so they reset on launch. The gating arithmetic is
-    ///   real; only its persistence is missing.
+    /// Everything is live except the meter, which is called out rather than hidden: its
+    /// counts are in memory, so they reset on launch. The gating arithmetic is real; only its
+    /// persistence is missing.
     ///
     /// Entitlements are live whenever RevenueCat is configured, and a fixed `.unknown`
     /// otherwise. `Purchases.shared` traps if the SDK was never configured, so that branch is
@@ -31,7 +28,7 @@ extension Services {
             recognizer: LiveRecognizer(),
             extractor: DeterministicExtractor(),
             normalizer: StandardNormalizer(),
-            exporter: FakeExporter(),
+            exporter: CSVExporter(),
             entitlements: entitlements,
             meter: FakeUsageMeter()
         )

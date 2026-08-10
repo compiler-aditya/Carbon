@@ -53,6 +53,8 @@ struct DatasetView: View {
 
     @Environment(\.services) private var services
     @State private var isShowingPaywall = false
+    @State private var isShowingExport = false
+    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         Group {
@@ -72,6 +74,24 @@ struct DatasetView: View {
             ToolbarItem(placement: .topBarTrailing) { exportButton }
         }
         .sheet(isPresented: $isShowingPaywall) { PaywallSheet(reason: .export) }
+        .sheet(isPresented: $isShowingExport) {
+            ExportSheet(
+                model: ExportModel(
+                    store: CarbonStore(modelContainer: modelContext.container),
+                    exporter: services.exporter,
+                    template: model.template
+                )
+            )
+        }
+        // The purchase edge case that matters most: when entitlement flips to Pro, the export
+        // the user originally asked for opens by itself. Making them tap Export a second time
+        // after paying for it is the single most avoidable insult in a paywall flow.
+        .onChange(of: services.entitlements.isPro) { wasPro, isPro in
+            if !wasPro, isPro, isShowingPaywall {
+                isShowingPaywall = false
+                isShowingExport = true
+            }
+        }
         .task { await model.load() }
     }
 
@@ -135,7 +155,13 @@ struct DatasetView: View {
     /// discoverability — a hidden Export teaches nobody that Carbon exports.
     private var exportButton: some View {
         Button {
-            isShowingPaywall = true
+            // Gate at the moment of the action. Export is the honest paywall: the work is
+            // already done and visible on screen, and Pro is for taking it with you.
+            if services.entitlements.isPro {
+                isShowingExport = true
+            } else {
+                isShowingPaywall = true
+            }
         } label: {
             Label("Export", systemImage: services.entitlements.isPro ? "square.and.arrow.up" : "lock")
         }
