@@ -9,47 +9,19 @@ import SwiftUI
 ///
 /// The real screens land next; this is the shell that proves the wiring.
 struct AppRoot: View {
-    @Query(sort: \FormTemplate.lastUsedAt, order: .reverse)
-    private var templates: [FormTemplate]
-
     var body: some View {
         TabView {
             Tab("Templates", systemImage: "doc.text") {
-                NavigationStack {
-                    templateList
-                        .navigationTitle("Templates")
-                }
+                NavigationStack { TemplateListView() }
             }
             Tab("Settings", systemImage: "gearshape") {
                 NavigationStack {
-                    SettingsView()
-                        .navigationTitle("Settings")
+                    SettingsView().navigationTitle("Settings")
                 }
             }
         }
-    }
-
-    @ViewBuilder
-    private var templateList: some View {
-        if templates.isEmpty {
-            ContentUnavailableView {
-                Label("No templates yet.", systemImage: "doc.text")
-            } description: {
-                Text(
-                    "A template teaches Carbon the shape of one paper form. "
-                        + "You'll only do this once per form."
-                )
-            }
-        } else {
-            List(templates) { template in
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(template.name)
-                    Text("\(template.recordCount) records")
-                        .font(.system(.caption, design: .monospaced))
-                        .foregroundStyle(.secondary)
-                }
-            }
-        }
+        .tint(CarbonColor.carbon)
+        .carbonTypeSize()
     }
 }
 
