@@ -5,15 +5,16 @@ import RevenueCat
 extension Services {
     /// The service set the running app uses.
     ///
-    /// Entitlements are live whenever RevenueCat is configured, and a fixed `.unknown`
-    /// otherwise. `Purchases.shared` traps if the SDK was never configured, so the branch is
-    /// load-bearing rather than defensive — and with a placeholder key there is genuinely
-    /// nothing to observe, so a static answer is more honest than a stalled SDK.
+    /// Capture, recognition, extraction, normalization and storage are all live. Two remain
+    /// fakes and are called out rather than hidden:
     ///
-    /// The remaining services are still fakes. The pipeline is being built behind these
-    /// protocols and the screens are being built in front of them; this is what lets those
-    /// happen at the same time. Each one is replaced with its live implementation as it
-    /// lands, and this comment goes with the last of them.
+    /// - `exporter` — CSV with full RFC-4180 handling is not written yet.
+    /// - `meter` — counts are in memory, so they reset on launch. The gating arithmetic is
+    ///   real; only its persistence is missing.
+    ///
+    /// Entitlements are live whenever RevenueCat is configured, and a fixed `.unknown`
+    /// otherwise. `Purchases.shared` traps if the SDK was never configured, so that branch is
+    /// load-bearing rather than defensive.
     @MainActor
     static func live() -> Services {
         let entitlements: any EntitlementProviding =
@@ -26,13 +27,23 @@ extension Services {
         }
 
         return Services(
-            pageStore: FakePageStore(),
-            recognizer: FakeRecognizer(),
-            extractor: FakeExtractor(),
+            pageStore: makePageStore(),
+            recognizer: LiveRecognizer(),
+            extractor: DeterministicExtractor(),
             normalizer: StandardNormalizer(),
             exporter: FakeExporter(),
             entitlements: entitlements,
             meter: FakeUsageMeter()
         )
+    }
+
+    /// Falls back to an in-memory store if Application Support cannot be reached.
+    ///
+    /// That should never happen on a real device, and if it somehow does, scans living only
+    /// for the session is a far better outcome than refusing to launch. The rest of the app
+    /// is unaffected either way.
+    @MainActor
+    private static func makePageStore() -> any PageStoring {
+        (try? LivePageStore()) ?? FakePageStore()
     }
 }
