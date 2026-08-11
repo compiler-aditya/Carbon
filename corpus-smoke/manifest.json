@@ -1,0 +1,17 @@
+{
+  "templates": [
+    {
+      "formType": "daily-register",
+      "name": "Daily Register",
+      "mode": "table",
+      "dateConvention": "dayMonthYear",
+      "fields": [
+        { "key": "date",   "label": "Date",   "type": "text" },
+        { "key": "item",   "label": "Item",   "type": "text",     "aliases": ["particulars"] },
+        { "key": "qty",    "label": "Qty",    "type": "integer",  "aliases": ["quantity"] },
+        { "key": "rate",   "label": "Rate",   "type": "currency" },
+        { "key": "amount", "label": "Amount", "type": "currency", "aliases": ["amt"] }
+      ]
+    }
+  ]
+}

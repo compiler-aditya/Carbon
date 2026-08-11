@@ -1,0 +1,49 @@
+{
+  "formType": "daily-register",
+  "isHandwritten": false,
+  "records": [
+    {
+      "date": "01/04/2026",
+      "item": "Basmati rice 5kg",
+      "qty": "12",
+      "rate": "560.00",
+      "amount": "6720.00"
+    },
+    {
+      "date": "01/04/2026",
+      "item": "Mustard oil 1L",
+      "qty": "8",
+      "rate": "185.50",
+      "amount": "1484.00"
+    },
+    {
+      "date": "02/04/2026",
+      "item": "Turmeric powder",
+      "qty": "24",
+      "rate": "42.00",
+      "amount": "1008.00"
+    },
+    {
+      "date": "02/04/2026",
+      "item": "Wheat flour 10kg",
+      "qty": "6",
+      "rate": "410.00",
+      "amount": "2460.00"
+    },
+    {
+      "date": "03/04/2026",
+      "item": "Sugar 1kg",
+      "qty": "30",
+      "rate": "48.00",
+      "amount": "1440.00"
+    },
+    {
+      "date": "03/04/2026",
+      "item": "Tea leaves 500g",
+      "qty": "15",
+      "rate": "260.00",
+      "amount": "3900.00"
+    }
+  ],
+  "isRendered": true
+}
