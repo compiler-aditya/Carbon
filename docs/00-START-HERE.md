@@ -17,7 +17,9 @@ Ten documents. Written to be fed to Claude Code as project context and to v0 as 
 | `06-revenuecat-spec.md` | Entitlements, offering, gating matrix, purchase edge cases, tests | Claude Code, Eng D |
 | `07-build-plan.md` | 7 days, 50-person split, cut order, corpus protocol, prize/credit | Everyone |
 | `08-readme-template.md` | The judged README | Docs owner, Day 6 |
-| `09-demo-video-script.md` | Shot list with timecodes, production notes | Video owner, Day 1 onward |
+| `09-demo-video-script.md` | Shot list with timecodes, production notes, and an as-built audit against `main` | Video owner, Day 1 onward |
+| `10-corpus-format.md` | Manifest and ground-truth format the corpus harness reads | Corpus owner |
+| `11-devpost-draft.md` | Submission copy, plus what is still missing from it | Docs owner, Day 7 |
 
 ## Setup
 
@@ -27,7 +29,7 @@ Ten documents. Written to be fed to Claude Code as project context and to v0 as 
 carbon/
 ├── CLAUDE.md          ← from this pack
 ├── docs/
-│   ├── 01-idea-brief.md … 09-demo-video-script.md
+│   ├── 01-idea-brief.md … 11-devpost-draft.md
 │   └── design/        ← v0 screenshots land here
 ├── LICENSE            ← unmodified MIT, Day 1
 └── README.md          ← stub Day 1, real Day 6
