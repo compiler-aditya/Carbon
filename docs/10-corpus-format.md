@@ -68,6 +68,13 @@ optional.
 - **One entry per ruled row**, in page order, for a table form. Exactly one for a record form.
 - **`isHandwritten`** splits the headline number. Printed and handwritten behave so differently
   that one blended figure hides the interesting result, and the README reports them separately.
+- **`isRendered`** marks a page this repository drew rather than photographed. Optional, and
+  false by default, because a collected page is the normal case and should not have to declare
+  itself. It exists for one reason: a rendered page has no camera in it — no skew, no shadow, no
+  paper, no lens — so scoring against one measures the harness, never accuracy. When *every*
+  page in a run carries it, the report prints its own disclaimer above the table, so a run with
+  nothing photographed behind it cannot be pasted into the README as an accuracy claim. See
+  `corpus-smoke/`, which ships with the repo so the harness can be run from a fresh clone.
 - **`conditions`** is free-form and optional — `shadow`, `glare`, `skew`, `crease`, `low-light`,
   `flash`. It lets a bad number be attributed to a hard page rather than a regression.
 - **Type values as Carbon would normalize them.** `6720.00`, not `₹6,720.00`. Scoring is an

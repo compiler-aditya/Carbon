@@ -110,18 +110,47 @@ Full specs in [`docs/`](docs/).
 
 ## Accuracy
 
-**Not yet measured.** The harness is built and tested; the corpus is not collected. Publishing a
-number with no photographs behind it is the thing this project argues against, so this section
-stays empty until it can be filled honestly.
+**Not yet measured on real photographs.** No corpus has been collected, so every cell below is
+empty. Publishing a number with no photographs behind it is the thing this project argues
+against, and a table filled from pages this repository drew itself would be the clearest
+possible way to do exactly that.
+
+| Metric | Printed forms | Handwritten |
+|---|---|---|
+| Records needing no correction | — | — |
+| Field-level precision | — | — |
+| Resolved by Tier 1 alone | — | — |
+| Rows found correctly | — | — |
+| Median latency per page | — | — |
+| p95 latency per page | — | — |
+
+The rows are the commitment: these are the six numbers that will appear here, split printed
+against handwritten, whatever they turn out to be.
+
+**What the harness does.** It runs the real pipeline over photographed forms with hand-typed
+ground truth and prints the table above, filled in. It scores exact matches only, counts a row
+Carbon never found as wrong rather than skipping it, separates row-count errors from field
+precision, and truncates percentages rather than rounding up —
+[`docs/10-corpus-format.md`](docs/10-corpus-format.md).
+
+**What has been measured.** One page, drawn by this repository, checking that the pipeline and
+the harness run end to end. It resolves all five fields through Tier 1 with no model, in 0.38 s
+against a 2 s budget. That is a plumbing check and a latency reading; it is not accuracy, and
+the harness now says so in its own output rather than trusting whoever pastes it:
+
+```bash
+cd Packages/CarbonCore && swift run CorpusHarness ../../corpus-smoke --markdown
+```
+
+Point it at a real corpus — a directory of photographs, one JSON of typed truth beside each, and
+a `manifest.json` — and the same command fills the table:
 
 ```bash
 cd Packages/CarbonCore && swift run CorpusHarness ../../corpus --markdown
 ```
 
-It runs the real pipeline over photographed forms with hand-typed ground truth and prints the
-table that will appear here. It scores exact matches only, counts a row Carbon never found as
-wrong rather than skipping it, separates row-count errors from field precision, and truncates
-percentages rather than rounding up — [`docs/10-corpus-format.md`](docs/10-corpus-format.md).
+`corpus/` is gitignored and always will be. Photographs of someone's register are their
+records, not this repository's.
 
 ## Monetization
 
@@ -144,9 +173,10 @@ via RevenueCat; the free limit is a courtesy, not DRM.
 cd Packages/CarbonCore && swift test
 ```
 
-**181 tests across 24 suites**, concentrated where extraction bugs live: normalization, Tier 1
-extraction, the ladder's merging rules, CSV RFC-4180 edge cases, the SwiftData schema against a
-real container, storage file cleanup, and the corpus maths. Eight drive Vision and
+**201 tests across 26 suites**, concentrated where extraction bugs live: normalization, Tier 1
+extraction, the ladder's merging rules, the rule that decides whether a page produced anything
+at all, CSV RFC-4180 edge cases, the SwiftData schema against a real container, storage file
+cleanup, and the corpus maths. Eight drive Vision and
 FoundationModels directly; those run locally and are skipped in CI, where the frameworks exist
 but their assets do not. `CARBON_FRAMEWORK_TESTS=1` forces them on.
 
@@ -165,6 +195,7 @@ capture · barcode lookups · a server of any kind · localization beyond Englis
 | Camera capture on a real device | ⬜ not yet run — a simulator has no camera |
 | Tier 2 against the real on-device model | ⬜ unit-tested against a stub; never executed |
 | Purchase flow end to end | ⬜ needs a RevenueCat Test Store key |
+| Corpus harness runs end to end | ✅ verified — `corpus-smoke/` ships with the repo |
 | Accuracy on real photographs | ⬜ harness ready, corpus not collected |
 | Demo video | ⬜ not shot |
 
