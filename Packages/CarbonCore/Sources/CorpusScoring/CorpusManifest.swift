@@ -74,4 +74,12 @@ public struct GroundTruth: Codable, Sendable {
     /// Whether the values were handwritten. The headline number is far more interesting split
     /// this way, and the README reports the two separately.
     public var isHandwritten: Bool?
+
+    /// Set when the page was drawn by this repository rather than photographed.
+    ///
+    /// A rendered page has no camera in it — no skew, no shadow, no paper texture, no lens —
+    /// so scoring against one measures the harness and the pipeline, never accuracy. Defaults
+    /// to false, because a page someone actually collected is the normal case and should not
+    /// have to declare itself.
+    public var isRendered: Bool?
 }

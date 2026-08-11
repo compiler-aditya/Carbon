@@ -31,6 +31,9 @@ public struct FieldOutcome: Sendable, Hashable {
 public struct PageResult: Sendable {
     public let imageName: String
     public let isHandwritten: Bool
+
+    /// Drawn by this repository rather than photographed. See `GroundTruth.isRendered`.
+    public let isRendered: Bool
     public let expectedRecordCount: Int
     public let actualRecordCount: Int
     public let outcomes: [FieldOutcome]
@@ -42,6 +45,7 @@ public struct PageResult: Sendable {
     public init(
         imageName: String,
         isHandwritten: Bool,
+        isRendered: Bool = false,
         expectedRecordCount: Int,
         actualRecordCount: Int,
         outcomesByRecord: [[FieldOutcome]],
@@ -49,6 +53,7 @@ public struct PageResult: Sendable {
     ) {
         self.imageName = imageName
         self.isHandwritten = isHandwritten
+        self.isRendered = isRendered
         self.expectedRecordCount = expectedRecordCount
         self.actualRecordCount = actualRecordCount
         self.outcomesByRecord = outcomesByRecord

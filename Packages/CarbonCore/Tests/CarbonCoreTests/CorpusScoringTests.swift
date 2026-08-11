@@ -19,6 +19,7 @@ struct CorpusScoringTests {
     private func page(
         _ name: String,
         handwritten: Bool = false,
+        rendered: Bool = false,
         records: [[FieldOutcome]],
         expectedRecords: Int? = nil,
         actualRecords: Int? = nil,
@@ -27,6 +28,7 @@ struct CorpusScoringTests {
         PageResult(
             imageName: name,
             isHandwritten: handwritten,
+            isRendered: rendered,
             expectedRecordCount: expectedRecords ?? records.count,
             actualRecordCount: actualRecords ?? records.count,
             outcomesByRecord: records,
@@ -260,5 +262,46 @@ struct CorpusScoringTests {
         #expect(markdown.contains("Records needing no correction"))
         #expect(markdown.contains("Field-level precision"))
         #expect(markdown.contains("Resolved by Tier 1 alone"))
+    }
+
+    /// The report is written to be pasted into the README, so it has to carry its own caveat.
+    /// A run with nothing photographed behind it must not be pasteable as an accuracy claim.
+    @Test("A report with no photographs in it refuses to read as an accuracy measurement")
+    func renderedOnlyReportsSaySo() {
+        let report = CorpusReport(pages: [
+            page("drawn", rendered: true, records: [[outcome("x", expected: "1", actual: "1")]])
+        ])
+        let markdown = CorpusReportFormatter.markdown(report)
+
+        #expect(markdown.contains("Not an accuracy measurement"))
+        #expect(markdown.contains("1 rendered page"))
+        // The word itself is the trap: "1 photograph" above a table of 100%s is the sentence
+        // that would do the damage, and no page here was photographed.
+        #expect(!markdown.contains("photograph**"))
+    }
+
+    @Test("A report with photographs behind it carries no such caveat")
+    func photographedReportsAreUnqualified() {
+        let report = CorpusReport(pages: [
+            page("shot", records: [[outcome("x", expected: "1", actual: "1")]])
+        ])
+        let markdown = CorpusReportFormatter.markdown(report)
+
+        #expect(!markdown.contains("Not an accuracy measurement"))
+        #expect(markdown.contains("1 photograph"))
+    }
+
+    @Test("A mixed corpus names both, and still qualifies itself")
+    func mixedCorpusNamesBoth() {
+        let report = CorpusReport(pages: [
+            page("shot", records: [[outcome("x", expected: "1", actual: "1")]]),
+            page("drawn", rendered: true, records: [[outcome("x", expected: "1", actual: "1")]]),
+        ])
+        let markdown = CorpusReportFormatter.markdown(report)
+
+        #expect(markdown.contains("1 photograph and 1 rendered page"))
+        // One real photograph is a thin corpus, but it is a corpus. The caveat is for having
+        // none at all.
+        #expect(!markdown.contains("Not an accuracy measurement"))
     }
 }

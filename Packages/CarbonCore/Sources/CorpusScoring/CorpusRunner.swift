@@ -84,6 +84,7 @@ public struct CorpusRunner: Sendable {
         return PageResult(
             imageName: imageURL.lastPathComponent,
             isHandwritten: truth.isHandwritten ?? false,
+            isRendered: truth.isRendered ?? false,
             expectedRecordCount: truth.records.count,
             actualRecordCount: result.records.count,
             outcomesByRecord: Self.compare(

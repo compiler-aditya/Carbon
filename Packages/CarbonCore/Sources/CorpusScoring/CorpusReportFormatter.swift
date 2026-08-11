@@ -13,13 +13,24 @@ public enum CorpusReportFormatter {
 
         var lines: [String] = []
 
-        let noun = report.pages.count == 1 ? "photograph" : "photographs"
-        lines.append(
-            """
-            Measured on **\(report.pages.count) \(noun)**, \
-            \(printed.count) printed and \(written.count) handwritten.
-            """
-        )
+        // The disclaimer travels with the numbers on purpose. This output is meant to be pasted
+        // straight into the README, so a run with no photographs behind it has to arrive
+        // carrying the reason it is not an accuracy claim — otherwise the paste launders it
+        // into one.
+        let photographs = report.pages.filter { !$0.isRendered }
+        if photographs.isEmpty, !report.pages.isEmpty {
+            lines.append(
+                """
+                > **Not an accuracy measurement.** Every page scored here was drawn by this \
+                repository rather than photographed, so there is no camera in the input — no \
+                skew, no shadow, no paper, no lens. These numbers show the pipeline and the \
+                harness running end to end. They say nothing about how Carbon reads a real page.
+                """
+            )
+            lines.append("")
+        }
+
+        lines.append("Measured on \(composition(of: report)).")
         lines.append("")
         lines.append("| Metric | Printed forms | Handwritten |")
         lines.append("|---|---|---|")
@@ -107,6 +118,26 @@ public enum CorpusReportFormatter {
         Median / p95 latency:          \(seconds(report.medianLatency())) / \
         \(seconds(report.p95Latency()))
         """
+    }
+
+    /// Says what was actually scored, in the words the thing deserves. A page that was never
+    /// photographed is never called a photograph.
+    private static func composition(of report: CorpusReport) -> String {
+        let rendered = report.pages.filter(\.isRendered).count
+        let photographed = report.pages.count - rendered
+        let written = report.pages.filter(\.isHandwritten).count
+        let printed = report.pages.count - written
+
+        var parts: [String] = []
+        if photographed > 0 {
+            parts.append("\(photographed) photograph\(photographed == 1 ? "" : "s")")
+        }
+        if rendered > 0 {
+            parts.append("\(rendered) rendered page\(rendered == 1 ? "" : "s")")
+        }
+        if parts.isEmpty { return "**nothing**" }
+
+        return "**\(parts.joined(separator: " and "))** — \(printed) printed and \(written) handwritten"
     }
 
     private static func row(_ label: String, _ printed: String, _ handwritten: String) -> String {
