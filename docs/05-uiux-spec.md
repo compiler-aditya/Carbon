@@ -244,6 +244,27 @@ Not a separate design, but must not look broken — one of the four criteria is 
 - Sheets present as form sheets, not full-screen.
 - Test in Split View at 1/3 width. That is where naive SwiftUI layouts fall apart, and it is thirty minutes of fixing.
 
+### 8.1 As built
+
+Verified on an iPad Pro 11-inch (M5) simulator, portrait, at default type and at accessibility3.
+
+| Spec item | Built | Note |
+|---|---|---|
+| Sidebar | `.tabViewStyle(.sidebarAdaptable)` on the root `TabView` | Not `NavigationSplitView` — see below |
+| Three-column grid | Done | `.adaptive(minimum: 240)` on regular width; three in portrait, four in landscape, two on a phone |
+| Readable measure | Done | `carbonReadableWidth()` on every prose-and-buttons screen |
+| `CellGrid` columns | Done | Columns absorb spare width up to 2× the base; five fields fit an 834pt page with no scrolling |
+| Form sheets | Already correct | `.sheet` is a form sheet on iPad by default; camera and processing stay `fullScreenCover`, which is right for both |
+| Keyboard navigation in the grid | **Not built** | See below |
+
+**Why not `NavigationSplitView`.** The root is a `TabView`, and on iPadOS 26 `.sidebarAdaptable` already turns the tab bar into a sidebar. Putting a split view inside a tab of that sidebar produces a sidebar inside a sidebar. The spec was written before the root settled on tabs; one sidebar is the intent, and this is the one that costs nothing on iPhone.
+
+**Why not keyboard navigation.** Arrow-key cell selection needs a focus model, key handling and scroll-to-focus, and none of it can be driven on a simulator without a hardware keyboard — it would ship unverified, which the definition of done forbids. Touch is how a judge will use the grid. Left out deliberately.
+
+**Split View at 1/3 width is inferred, not driven.** At that width the app is in a compact horizontal size class, which is the same layout verified extensively on iPhone including at accessibility3. The `horizontalSizeClass` branches above are what make that true. The Split View gesture itself was not performed.
+
+One system behaviour worth knowing: at accessibility sizes the taller tab pill displaces the large navigation title on the templates screen, so the title is not drawn. The pill itself names the tab, so the screen still identifies itself. Not our layout, and not worth fighting.
+
 ---
 
 ## 9. v0 prompt pack
