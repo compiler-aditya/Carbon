@@ -221,6 +221,19 @@ Copy rules, per the design skill: state what happened and what to do, in the int
 - `noFieldsMatched` → **"Nothing matched this template."** / "This may be a different form. Choose another template, or scan again."
 - `modelUnavailable` → not an error dialog at all. A single line in Settings. Extraction continues.
 
+### 5.1 As built
+
+Two cases were added to the enum above, both for dead ends found while wiring the states up:
+
+- `imageUnreadable` — a picked photo that would not decode. Nearly always an iCloud photo that has not finished downloading, and previously the tap simply did nothing.
+- `saveFailed(underlying:)` — the store refusing a write. Was reported as `recognitionFailed`, which sends someone off to retake a photograph that was fine.
+
+**Guidance now comes with an affordance.** `ErrorRecovery` (`.openSettings` / `.retry` / `.acknowledge`) is derived from the same exhaustive switch as the copy, so a new case cannot ship with a sentence telling the user what to do and no way to do it. `openSettings` is reserved for `cameraPermissionDenied` — the one thing the app genuinely cannot fix itself — and a test enforces that.
+
+**Nothing extracted is an error, nothing metered is not.** `ExtractionResult.emptyOutcome(for:)` decides, and it is checked *before* the meter: a page that read as nothing raises `noTableFound` or `noFieldsMatched`, while a page the free tier trimmed to nothing routes to the paywall as before. A record made only of unresolved fields and template defaults counts as nothing read — saving it would put invented data into the dataset the product exists to produce.
+
+The camera permission is checked before `VNDocumentCameraViewController` is presented, because presenting it without one shows a black frame rather than a reason. `.notDetermined` is left alone so the system prompt still appears at first use, where it explains itself.
+
 ## 6. Privacy posture
 
 This is a genuine differentiator, so it must be true and it must be stated precisely.
