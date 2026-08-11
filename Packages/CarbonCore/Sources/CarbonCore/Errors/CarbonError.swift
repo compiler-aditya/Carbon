@@ -12,6 +12,10 @@ public enum CarbonError: Error, Equatable, Hashable, Sendable {
     case pageWriteFailed(underlying: String)
     case recognitionFailed(pageIndex: Int)
 
+    /// A picked photograph could not be turned into an image. In practice this is almost
+    /// always an iCloud photo that has not finished downloading, which is worth saying.
+    case imageUnreadable
+
     /// A table-mode template met a page with no table on it.
     case noTableFound
 
@@ -20,6 +24,10 @@ public enum CarbonError: Error, Equatable, Hashable, Sendable {
 
     case modelUnavailable(reason: ModelUnavailableReason)
     case modelTimedOut
+
+    /// The store refused a write — a template, or the records a page produced.
+    case saveFailed(underlying: String)
+
     case exportFailed(underlying: String)
 
     /// Whether this should be put in front of the user at all.

@@ -35,6 +35,12 @@ extension CarbonError {
                 defaultValue: "Page \(pageIndex + 1) couldn't be read.",
                 bundle: .atURL(Bundle.module.bundleURL)
             )
+        case .imageUnreadable:
+            LocalizedStringResource(
+                "error.image_unreadable.title",
+                defaultValue: "That photo couldn't be opened.",
+                bundle: .atURL(Bundle.module.bundleURL)
+            )
         case .noTableFound:
             LocalizedStringResource(
                 "error.no_table_found.title",
@@ -53,6 +59,12 @@ extension CarbonError {
             LocalizedStringResource(
                 "error.model_timed_out.title",
                 defaultValue: "Some fields were left for you to fill in.",
+                bundle: .atURL(Bundle.module.bundleURL)
+            )
+        case .saveFailed:
+            LocalizedStringResource(
+                "error.save_failed.title",
+                defaultValue: "That couldn't be saved.",
                 bundle: .atURL(Bundle.module.bundleURL)
             )
         case .exportFailed:
@@ -90,6 +102,15 @@ extension CarbonError {
                 defaultValue: "Try a straighter photo in better light.",
                 bundle: .atURL(Bundle.module.bundleURL)
             )
+        case .imageUnreadable:
+            LocalizedStringResource(
+                "error.image_unreadable.guidance",
+                defaultValue: """
+                    It may still be downloading from iCloud. Try again in a moment, or pick a \
+                    different photo.
+                    """,
+                bundle: .atURL(Bundle.module.bundleURL)
+            )
         case .noTableFound:
             LocalizedStringResource(
                 "error.no_table_found.guidance",
@@ -111,6 +132,12 @@ extension CarbonError {
             LocalizedStringResource(
                 "error.model_timed_out.guidance",
                 defaultValue: "They're marked for review at the top of the record.",
+                bundle: .atURL(Bundle.module.bundleURL)
+            )
+        case .saveFailed:
+            LocalizedStringResource(
+                "error.save_failed.guidance",
+                defaultValue: "Check how much space is left on your device, then try again.",
                 bundle: .atURL(Bundle.module.bundleURL)
             )
         case .exportFailed:

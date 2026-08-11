@@ -11,6 +11,7 @@ struct CarbonErrorTests {
         .cameraPermissionDenied,
         .pageWriteFailed(underlying: "disk full"),
         .recognitionFailed(pageIndex: 0),
+        .imageUnreadable,
         .noTableFound,
         .noFieldsMatched,
         .modelUnavailable(reason: .deviceNotEligible),
@@ -18,6 +19,7 @@ struct CarbonErrorTests {
         .modelUnavailable(reason: .modelNotReady),
         .modelUnavailable(reason: .unsupportedLanguage),
         .modelTimedOut,
+        .saveFailed(underlying: "disk full"),
         .exportFailed(underlying: "no space"),
     ]
 
@@ -72,6 +74,31 @@ struct CarbonErrorTests {
         )
         let offenders = words.intersection(banned)
         #expect(offenders.isEmpty, "\(error) copy uses banned vocabulary: \(offenders.sorted())")
+    }
+
+    @Test("Only a permission the app cannot grant itself sends anyone to Settings")
+    func settingsIsReservedForPermissions() {
+        #expect(CarbonError.cameraPermissionDenied.recovery == .openSettings)
+        for error in Self.allCases where error != .cameraPermissionDenied {
+            #expect(error.recovery != .openSettings, "\(error) should not open Settings")
+        }
+    }
+
+    @Test("A retry is only offered where retrying could work")
+    func retryIsOfferedWhereItHelps() {
+        #expect(CarbonError.noTableFound.recovery == .retry)
+        #expect(CarbonError.noFieldsMatched.recovery == .retry)
+        #expect(CarbonError.imageUnreadable.recovery == .retry)
+        #expect(CarbonError.saveFailed(underlying: "x").recovery == .retry)
+
+        // A device with no camera will still have no camera on the second tap.
+        #expect(CarbonError.cameraUnavailable.recovery == .acknowledge)
+    }
+
+    @Test("Nothing the user never sees offers them something to do", arguments: allCases)
+    func silentErrorsAreInert(error: CarbonError) {
+        guard !error.isUserFacing else { return }
+        #expect(error.recovery == .acknowledge)
     }
 }
 
