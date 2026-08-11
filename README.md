@@ -31,7 +31,8 @@ lands in the same shaped dataset.
 
 ## How it works
 
-1. **Map the form once** — name it, declare its fields.
+1. **Map the form once** — name it, declare its fields. On a table form you can photograph the
+   blank page instead and take the columns it finds, types and all.
 2. **Photograph filled copies.** Vision reads the page on-device; columns are matched to your
    fields and values typed and normalized.
 3. **Check what needs checking.** Every value sits on a rule whose style *is* its confidence —
@@ -173,7 +174,7 @@ via RevenueCat; the free limit is a courtesy, not DRM.
 cd Packages/CarbonCore && swift test
 ```
 
-**201 tests across 26 suites**, concentrated where extraction bugs live: normalization, Tier 1
+**216 tests across 27 suites**, concentrated where extraction bugs live: normalization, Tier 1
 extraction, the ladder's merging rules, the rule that decides whether a page produced anything
 at all, CSV RFC-4180 edge cases, the SwiftData schema against a real container, storage file
 cleanup, and the corpus maths. Eight drive Vision and

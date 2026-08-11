@@ -31,16 +31,16 @@ Overhead, static. A filled paper register on a desk — real, ruled, handwritten
 
 *No app yet. Eight seconds of establishing that the problem is real buys you the rest of the video.*
 
-### 0:08–0:22 · Setup, once
-Phone in frame, over the register. Open Carbon → **New template** → name it "Daily Register" → mode **Table** → add five fields, typing each label and picking its type: Date, Item (text), Qty (number), Rate (currency), Amount (currency) → Save.
+### 0:08–0:26 · Setup, once
+Phone in frame, over the register. Open Carbon → **New template** → mode **Table** → **Choose a photo of the form** (or **Scan the blank form** on a device) → the **Use detected columns — 5 found** row appears, with each column listed under it, its guessed type on the right and the first few values it read underneath → tap → the fields populate → name it "Daily Register" → Save.
 
-> **VO:** "You show Carbon the form once — its name, and what its columns are."
+> **VO:** "You show Carbon the form once. It reads the headings and sets the fields up."
 
-*Shorter than the original plan, because the **Use detected columns** assist was never built (see [As built](#as-built)). Without it this beat is honest work rather than magic, so do not linger: keep the typing tight, let the type pickers land visibly, and let the VO carry the point that this happens once per form and never again. The payoff beat is what has to breathe, not this one.*
+*This is the interaction that makes the whole product make sense. Give it real time — do not speed-ramp through it. Hold for a beat on the detected list before tapping: the type beside each column (date, text, integer, currency, currency) and the sample values under it are what prove Carbon read the form rather than guessed at it, and they are legible for about a second and a half.*
 
-*Type the labels rather than pasting them. A field appearing fully formed reads as a cut.*
+*Types are read from the **values**, not the headings — so if you shoot a register whose "Amount" column holds words, it will correctly say text, and that is not a bug to hide. Shoot a page where the guesses are right.*
 
-### 0:22–0:42 · The payoff beat
+### 0:26–0:44 · The payoff beat
 Same phone, same register, now a **filled** page. Tap **Scan** → document camera → shutter → processing labels tick past — `Reading page…`, `Matching fields…`, `Checking values…` — → Review appears as a grid, one row per ruled line on the paper.
 
 Hold on the grid for a full two seconds. Doubtful cells carry a tinted background; the rest are plain.
@@ -49,11 +49,11 @@ Hold on the grid for a full two seconds. Doubtful cells carry a tinted backgroun
 
 *This is the beat the entire video exists for. Everything before it is setup and everything after it is proof. If you get one shot perfect, make it this one.*
 
-*The **signature animation does not play here** — it lives on the record-mode review screen, not in `CellGrid`. It has its own beat at 0:56. Do not narrate it over the grid; the claim would not match what is on screen.*
+*The **signature animation does not play here** — it lives on the record-mode review screen, not in `CellGrid`. It has its own beat at 0:58. Do not narrate it over the grid; the claim would not match what is on screen.*
 
 *`<R>` throughout this script is the number of ruled lines on the page you actually film — read it off the paper and use the same number in every VO line and on the Save button. This script used to hard-code fourteen, which was true of no register that exists.*
 
-### 0:42–0:56 · Honesty, which is the product argument
+### 0:44–0:58 · Honesty, which is the product argument
 Zoom the grid. Three cells sit tinted. Tap one → the editor opens carrying **"Read from the page as …"** → tap **Show on the page** → the photograph zooms to exactly that cell, boxed in red → the handwriting genuinely is ambiguous → type the correct value → Save → the cell loses its tint and gains a tick.
 
 > **VO:** "It tells you what it isn't sure about, and shows you where on the page it came from. `<R>` rows, three worth checking."
@@ -62,7 +62,7 @@ Zoom the grid. Three cells sit tinted. Tap one → the editor opens carrying **"
 
 *This beat used to claim it "matches the accuracy numbers in the README". The README's accuracy table is deliberately empty — no corpus has been collected — so do not make that claim in the VO or the description. Showing a miss is convincing on its own; a judge who checks the README and finds no numbers to match would be right to hold it against the video.*
 
-### 0:56–1:10 · The dataset accumulates, and the one moment of motion
+### 0:58–1:10 · The dataset accumulates, and the one moment of motion
 **Save `<R>` records** → the dataset screen, scrolled, showing a few hundred existing rows **accumulated over several months**. Search a term, one result. This must not be an empty demo account — populate it beforehand with believable data.
 
 Then tap one row. It opens as a single record, and **this is where the signature animation plays**: the values land in sequence, as if typed onto the form, and only then do the rules under them resolve into their confidence styles — solid, dashed, dotted red.
@@ -111,7 +111,7 @@ something the repository does not contain. Four things had drifted:
 
 | The script said | `main` says | What changed above |
 |---|---|---|
-| **Use detected columns — 5 found** prefills the template from a scanned header row | Not built. No such code exists | Setup beat is now typed by hand, and shortened from 18s to 14s |
+| **Use detected columns — 5 found** prefills the template from a scanned header row | **Built after this audit found it missing.** `ColumnDetector` in `CarbonCore`, wired into the template editor in table mode | Setup beat restored to the one-tap version, and the detected list is now held on camera because it shows the guessed types and the values behind them |
 | The signature animation plays over the grid in the payoff beat | It is on `FieldRow`, so it plays on the record-mode review screen. `CellGrid` has no animation | Moved to its own beat at 0:56, where a saved record is opened from the dataset |
 | "Hey Siri, capture Daily Register" | The registered phrases are *"Capture a form with Carbon"*, *"Scan a form with Carbon"*, *"New Carbon record"*. No per-template phrase | Phrase corrected; say it exactly |
 | iPad alternative shows keyboard cell navigation | Deliberately not built — `05-uiux-spec.md` §8.1 | iPad shot is the sidebar and the full-width grid |
@@ -137,14 +137,17 @@ risk worth knowing before the tripod is up:
 Shoot the beats that do not depend on these first, so a blocker on shoot day costs one shot
 rather than the video.
 
-### If there is time to build one more thing
+### The one thing this audit changed in the app
 
-**Use detected columns.** It is the only cut feature whose absence the video actually feels:
-the setup beat is now five fields typed by hand where it was meant to be one tap that proves the
-app read the form. `05-uiux-spec.md` §4.3 calls it "the highest-value
-90 seconds of interaction design in the app". The scan already produces a recognised header row
-in table mode, so the work is mapping that row onto draft fields with guessed types — not a new
-pipeline. This is a scope call, not a task: it is not in `01-idea-brief.md` §6.
+**Use detected columns was built**, because it was the only cut feature whose absence the video
+actually felt — the setup beat would otherwise have been five fields typed by hand where
+`05-uiux-spec.md` §4.3 calls it "the highest-value 90 seconds of interaction design in the app".
+
+Worth knowing before shooting it: **types come from the values, not the headings.** A column
+called "Amount" holding words is correctly typed as text, and the heading only decides when the
+column is empty — which is what makes the assist work on a blank form as well as a filled one.
+Sixteen tests in `ColumnDetectorTests` pin that behaviour, including the tolerance that stops one
+misread cell demoting a whole column.
 
 ## Production notes
 

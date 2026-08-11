@@ -135,6 +135,10 @@ Two-step sheet, and the order matters — the reference scan first is what makes
 - Field list, reorderable, swipe-to-delete. Each row: label, type chip, required dot.
 - Add field → inline expanding row: label text field, type picker (segmented for common four, menu for the rest), required toggle, and type-specific extras (choices editor for `.choice`, currency picker for `.currency`, date convention for `.date`).
 - **The assist:** if a reference scan exists and the mode is Table, offer **Use detected columns** — pre-fill fields from the recognised header row, with types guessed from cell content. One tap creates the whole template. This is the highest-value 90 seconds of interaction design in the app and it should be the first thing shown in the video's setup beat.
+  - **Built.** `ColumnDetector` in `CarbonCore`; the editor offers **Scan the blank form** / **Choose a photo of the form**, then lists each column with its guessed type and the first few values behind the guess before anything is accepted. Showing the evidence is the same posture as the confidence rules: a guess is offered as a guess.
+  - **The body decides the type, not the heading.** A column called "Amount" holding words is text. The heading only decides when the column is empty — which is what lets the assist work on a blank form, where there is nothing but headings.
+  - Accepting **appends**, skipping any label already present, so a user who typed two fields first does not lose them.
+  - A heading merged across two columns names neither, so it is skipped rather than guessed at, and a blank gutter column is not a field.
 - Save is disabled until name is non-empty and there is ≥1 field. Explain why inline, never with a disabled button and no reason.
 
 ### 4.4 Capture and processing
