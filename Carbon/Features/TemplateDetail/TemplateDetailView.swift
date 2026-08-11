@@ -36,6 +36,7 @@ struct TemplateDetailView: View {
                 fieldsSection
             }
             .padding(CarbonSpacing.regular)
+            .carbonReadableWidth()
         }
         .carbonBackground()
         .navigationTitle(template.name)

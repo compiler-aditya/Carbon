@@ -75,7 +75,8 @@ struct EmptyState<Actions: View>: View {
                 .padding(.top, CarbonSpacing.tight)
         }
         .padding(CarbonSpacing.section)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .carbonReadableWidth()
+        .frame(maxHeight: .infinity)
     }
 }
 

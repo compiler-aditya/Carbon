@@ -63,6 +63,7 @@ struct OnboardingView: View {
 
             actions
                 .padding(CarbonSpacing.regular)
+                .carbonReadableWidth()
         }
         .carbonBackground()
         .overlay(alignment: .topTrailing) {
@@ -98,6 +99,7 @@ struct OnboardingView: View {
             Spacer()
         }
         .padding(.horizontal, CarbonSpacing.section)
+        .carbonReadableWidth()
         .accessibilityElement(children: .combine)
     }
 

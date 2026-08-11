@@ -60,6 +60,10 @@ struct AppRoot: View {
                 }
             }
         }
+        // On iPad this becomes a sidebar, which is what the extra width is for; on iPhone it
+        // stays a tab bar. One line, and it is the difference between an iPhone app running
+        // on a tablet and an app that belongs there.
+        .tabViewStyle(.sidebarAdaptable)
         .tint(CarbonColor.carbon)
         .carbonTypeSize()
     }

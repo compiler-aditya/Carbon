@@ -61,6 +61,16 @@ enum CarbonRadius {
 }
 
 extension View {
+    /// Caps content at a readable measure and centres what is left.
+    ///
+    /// A full-width button on an 834pt iPad is not a button, it is a banner, and a line of
+    /// body text run edge to edge across a tablet is genuinely harder to read. Everything the
+    /// eye has to track — prose, forms, actions — gets a column. Grids and tables do not:
+    /// those want the whole page.
+    func carbonReadableWidth(_ maxWidth: CGFloat = 560) -> some View {
+        frame(maxWidth: maxWidth).frame(maxWidth: .infinity)
+    }
+
     /// The app background. Used instead of a plain `.background` so the paper colour is
     /// applied the same way everywhere.
     func carbonBackground() -> some View {

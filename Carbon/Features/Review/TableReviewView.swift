@@ -138,6 +138,7 @@ struct TableReviewView: View {
         }
         .buttonStyle(.carbonPrimary)
         .padding(CarbonSpacing.regular)
+        .carbonReadableWidth()
         .background(CarbonColor.paperRaised)
         .overlay(alignment: .top) {
             Rectangle().fill(CarbonColor.rule.opacity(0.5)).frame(height: 1)
