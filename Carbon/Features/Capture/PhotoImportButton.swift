@@ -14,6 +14,7 @@ struct PhotoImportButton: View {
     let label: String
     let isPrimary: Bool
     let onPicked: ([CGImage]) -> Void
+    let onFailed: (CarbonError) -> Void
 
     @State private var selection: [PhotosPickerItem] = []
     @State private var isLoading = false
@@ -36,8 +37,6 @@ struct PhotoImportButton: View {
         }
     }
 
-    /// Loads in the order they were picked. Multi-page order is the user's order, and a
-    /// concurrent load would scramble it for no meaningful speed-up on a handful of photos.
     private func load(_ items: [PhotosPickerItem]) async {
         isLoading = true
         defer {
@@ -45,6 +44,32 @@ struct PhotoImportButton: View {
             selection = []
         }
 
+        let images = await PhotoImportLoader.images(from: items)
+
+        // Picking a photo and having nothing at all happen is the dead end this replaces. It
+        // is not a rare path either: an iCloud photo that has not finished downloading fails
+        // exactly here.
+        guard !images.isEmpty else {
+            onFailed(.imageUnreadable)
+            return
+        }
+        onPicked(images)
+    }
+}
+
+/// Turns picked library items into upright images.
+///
+/// Lifted out of the button so the error sheet's retry runs the same loader, rather than a
+/// second copy that could drift on orientation handling.
+enum PhotoImportLoader {
+    /// Loads in the order they were picked. Multi-page order is the user's order, and a
+    /// concurrent load would scramble it for no meaningful speed-up on a handful of photos.
+    ///
+    /// An item that fails is skipped rather than failing the batch. Only losing *every* item
+    /// is reported: with one photo — which is nearly always the case — the two are the same
+    /// thing, and failing a four-page scan because page three is still syncing would be worse
+    /// than proceeding with what arrived.
+    static func images(from items: [PhotosPickerItem]) async -> [CGImage] {
         var images: [CGImage] = []
         for item in items {
             guard
@@ -53,9 +78,7 @@ struct PhotoImportButton: View {
             else { continue }
             images.append(image)
         }
-
-        guard !images.isEmpty else { return }
-        onPicked(images)
+        return images
     }
 }
 

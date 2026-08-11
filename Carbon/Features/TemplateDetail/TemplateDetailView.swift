@@ -1,5 +1,6 @@
 import CarbonCore
 import CoreGraphics
+import PhotosUI
 import SwiftData
 import SwiftUI
 
@@ -16,8 +17,20 @@ struct TemplateDetailView: View {
     @State private var reviewRecordIDs: [UUID] = []
     @State private var isShowingCamera = false
     @State private var isShowingPaywall = false
+    @State private var isShowingPhotoPicker = false
+    @State private var retrySelection: [PhotosPickerItem] = []
+    @State private var pendingRetry: Retry?
     @State private var recordCount = 0
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    /// What the error sheet's action should do once the sheet is out of the way.
+    ///
+    /// Deferred rather than run in the button, because opening the camera or the picker while
+    /// the sheet is still animating out is how a presentation gets silently dropped.
+    private enum Retry {
+        case scan
+        case choosePhoto
+    }
 
     /// Rows that pair a label with a value stack vertically at accessibility sizes. Side by
     /// side, "7 records" in mono wraps mid-word to "7 / record / s", which is worse than
@@ -79,6 +92,23 @@ struct TemplateDetailView: View {
         .sheet(isPresented: $isShowingPaywall) {
             PaywallSheet(reason: captureModel?.paywallReason ?? .recordLimit)
         }
+        // The pipeline could already fail; until now nothing rendered it, so a page that read
+        // as nothing returned the user to this screen with no records and no explanation.
+        .sheet(isPresented: hasFailure, onDismiss: runPendingRetry) {
+            if let failure {
+                ErrorSheet(error: failure) { retryAction(for: failure) }
+            }
+        }
+        .photosPicker(
+            isPresented: $isShowingPhotoPicker,
+            selection: $retrySelection,
+            maxSelectionCount: 4,
+            matching: .images
+        )
+        .onChange(of: retrySelection) { _, items in
+            guard !items.isEmpty else { return }
+            Task { await loadRetryPhotos(items) }
+        }
         .onChange(of: captureModel?.state) { _, newValue in
             if case .review(let ids) = newValue { reviewRecordIDs = ids }
         }
@@ -117,13 +147,15 @@ struct TemplateDetailView: View {
                 PhotoImportButton(
                     label: String(localized: "Choose a photo"),
                     isPrimary: false,
-                    onPicked: importPicked
+                    onPicked: importPicked,
+                    onFailed: reportFailure
                 )
             } else {
                 PhotoImportButton(
                     label: String(localized: "Choose a photo"),
                     isPrimary: true,
-                    onPicked: importPicked
+                    onPicked: importPicked,
+                    onFailed: reportFailure
                 )
 
                 Text("This device has no camera, so pick a photo of the form instead.")
@@ -218,6 +250,54 @@ struct TemplateDetailView: View {
         )
     }
 
+    private var failure: CarbonError? {
+        if case .failed(let error) = captureModel?.state { error } else { nil }
+    }
+
+    private var hasFailure: Binding<Bool> {
+        Binding(
+            get: { failure != nil },
+            set: { if !$0 { captureModel?.dismissFailure() } }
+        )
+    }
+
+    /// The one thing worth doing again, phrased as what this device can actually do. On a
+    /// simulator there is no camera, so "Scan again" would be a button that cannot work.
+    @ViewBuilder
+    private func retryAction(for error: CarbonError) -> some View {
+        if error.recovery == .retry {
+            Button(DocumentCamera.isAvailable ? "Scan again" : "Choose another photo") {
+                pendingRetry = DocumentCamera.isAvailable ? .scan : .choosePhoto
+                captureModel?.dismissFailure()
+            }
+            .buttonStyle(.carbonPrimary)
+        }
+    }
+
+    private func runPendingRetry() {
+        guard let pendingRetry else { return }
+        self.pendingRetry = nil
+        switch pendingRetry {
+        case .scan: Task { await scanTapped() }
+        case .choosePhoto: isShowingPhotoPicker = true
+        }
+    }
+
+    private func loadRetryPhotos(_ items: [PhotosPickerItem]) async {
+        let images = await PhotoImportLoader.images(from: items)
+        retrySelection = []
+        if images.isEmpty {
+            reportFailure(.imageUnreadable)
+        } else {
+            importPicked(images)
+        }
+    }
+
+    private func reportFailure(_ error: CarbonError) {
+        prepareModel()
+        captureModel?.fail(error)
+    }
+
     private func prepareModel() {
         guard captureModel == nil else { return }
         captureModel = CaptureModel(services: services, store: store, template: template)
@@ -229,7 +309,7 @@ struct TemplateDetailView: View {
 
     private func scanTapped() async {
         prepareModel()
-        await captureModel?.beginCapture()
+        await captureModel?.beginCapture(usingCamera: true)
         if captureModel?.state == .capturing {
             isShowingCamera = true
         }

@@ -55,11 +55,16 @@ final class CaptureModel {
         self.template = template
     }
 
-    /// Checks the meter **before** the camera opens.
+    /// Checks the camera permission and then the meter, both **before** the camera opens.
     ///
     /// Making someone watch the work happen and then refusing to save it is hostile, so the
-    /// gate comes first or not at all.
-    func beginCapture() async {
+    /// gates come first or not at all.
+    func beginCapture(usingCamera: Bool = false) async {
+        if usingCamera, let denial = CameraAuthorization.denial() {
+            state = .failed(denial)
+            return
+        }
+
         let decision = await services.meter.canCreateRecords(
             count: 1, isPro: services.entitlements.isPro
         )
@@ -72,6 +77,19 @@ final class CaptureModel {
 
     func cancelCapture() {
         state = .idle
+    }
+
+    /// Raised by the screen for a failure it detected itself, before the pipeline was reached.
+    func fail(_ error: CarbonError) {
+        state = .failed(error)
+    }
+
+    /// Clears a failure so the screen underneath is usable again.
+    ///
+    /// Returning to `.idle` rather than holding the error means dismissing the sheet and
+    /// tapping Scan works, instead of re-presenting the failure the user just read.
+    func dismissFailure() {
+        if case .failed = state { state = .idle }
     }
 
     /// Runs the pipeline over captured pages.
@@ -118,6 +136,13 @@ final class CaptureModel {
 
         state = .processing(step: .checking, pageIndex: index, total: total)
 
+        // Before the meter, deliberately. A page that read as nothing is a failure the user
+        // needs told about; a page the meter trimmed to nothing is a paywall. Checking the
+        // meter first would present the second when it is really the first.
+        if let outcome = result.emptyOutcome(for: template) {
+            throw outcome
+        }
+
         let decision = await services.meter.canCreateRecords(
             count: result.records.count, isPro: services.entitlements.isPro
         )
@@ -146,12 +171,20 @@ final class CaptureModel {
             aliasesToLearn: result.aliasesToLearn
         )
 
-        let ids = try await store.save(
-            trimmed,
-            templateID: template.id,
-            pages: [pageRef],
-            rawPageText: page.fullText
-        )
+        // Mapped rather than left to the generic catch, which would report a full disk as
+        // "that page couldn't be read" and send the user off to retake a perfectly good photo.
+        let ids: [UUID]
+        do {
+            ids = try await store.save(
+                trimmed,
+                templateID: template.id,
+                pages: [pageRef],
+                rawPageText: page.fullText
+            )
+        } catch {
+            throw CarbonError.saveFailed(underlying: String(describing: error))
+        }
+
         await services.meter.recordCreated(count: ids.count)
         return ids
     }
