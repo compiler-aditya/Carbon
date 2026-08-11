@@ -17,6 +17,7 @@ struct TemplateEditorView: View {
     @State private var newFieldLabel = ""
     @State private var newFieldType: FieldType = .text
     @State private var isSaving = false
+    @State private var saveError: CarbonError?
     @FocusState private var isAddFieldFocused: Bool
 
     var body: some View {
@@ -62,6 +63,21 @@ struct TemplateEditorView: View {
                         Text(reason)
                             .font(CarbonFont.caption)
                             .foregroundStyle(CarbonColor.inkMuted)
+                    }
+                }
+
+                // Shown in place rather than as a second sheet, so the work the user just
+                // typed stays on screen and Save is still one tap away.
+                if let saveError {
+                    Section {
+                        VStack(alignment: .leading, spacing: CarbonSpacing.hair) {
+                            Text(String(localized: saveError.title))
+                                .font(CarbonFont.body)
+                                .foregroundStyle(CarbonColor.stamp)
+                            Text(String(localized: saveError.guidance))
+                                .font(CarbonFont.caption)
+                                .foregroundStyle(CarbonColor.inkMuted)
+                        }
                     }
                 }
             }
@@ -136,17 +152,24 @@ struct TemplateEditorView: View {
         isAddFieldFocused = true
     }
 
+    /// Dismisses only on success. Closing the sheet on a failed write would look exactly like
+    /// a save, and the template the user just described would simply not be there.
     private func save() async {
         isSaving = true
+        saveError = nil
         defer { isSaving = false }
 
-        try? await store.createTemplate(
-            name: name.trimmingCharacters(in: .whitespaces),
-            subtitle: subtitle.trimmingCharacters(in: .whitespaces),
-            mode: mode,
-            symbolName: mode == .table ? "tablecells" : "doc.text",
-            fields: fields
-        )
-        dismiss()
+        do {
+            try await store.createTemplate(
+                name: name.trimmingCharacters(in: .whitespaces),
+                subtitle: subtitle.trimmingCharacters(in: .whitespaces),
+                mode: mode,
+                symbolName: mode == .table ? "tablecells" : "doc.text",
+                fields: fields
+            )
+            dismiss()
+        } catch {
+            saveError = .saveFailed(underlying: String(describing: error))
+        }
     }
 }

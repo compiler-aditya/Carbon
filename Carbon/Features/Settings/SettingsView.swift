@@ -17,6 +17,7 @@ struct SettingsView: View {
     @State private var storageBytes = 0
     @State private var purgeableRecords = 0
     @State private var exportSummary: ExportSummary = .empty
+    @State private var purgeFailure: CarbonError?
     @Environment(\.modelContext) private var modelContext
 
     var body: some View {
@@ -112,6 +113,14 @@ struct SettingsView: View {
             )
             .font(CarbonFont.caption)
             .foregroundStyle(CarbonColor.inkMuted)
+
+            // A purge that failed used to leave the same number on screen and say nothing,
+            // which reads as the button not working rather than as the deletion not happening.
+            if let purgeFailure {
+                Text(String(localized: purgeFailure.title))
+                    .font(CarbonFont.caption)
+                    .foregroundStyle(CarbonColor.stamp)
+            }
         }
     }
 
@@ -132,7 +141,12 @@ struct SettingsView: View {
     }
 
     private func purgeImages() async {
-        try? await store.purgeImagesForConfirmedRecords(pageStore: services.pageStore)
+        do {
+            purgeFailure = nil
+            try await store.purgeImagesForConfirmedRecords(pageStore: services.pageStore)
+        } catch {
+            purgeFailure = .saveFailed(underlying: String(describing: error))
+        }
         await loadUsage()
     }
 

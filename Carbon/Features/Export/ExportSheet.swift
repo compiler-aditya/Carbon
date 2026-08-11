@@ -22,7 +22,7 @@ enum ExportScope: String, CaseIterable, Identifiable {
 final class ExportModel {
     private(set) var records: [RecordSnapshot] = []
     private(set) var fileURL: URL?
-    private(set) var errorMessage: String?
+    private(set) var failure: CarbonError?
 
     var scope: ExportScope = .all { didSet { Task { await load() } } }
 
@@ -62,9 +62,11 @@ final class ExportModel {
                 templateID: template.id, recordCount: records.count, fileName: name
             )
             fileURL = url
-            errorMessage = nil
+            failure = nil
         } catch {
-            errorMessage = String(localized: "The export didn't finish. Try again.")
+            // Through the taxonomy rather than a string written here, so this sentence and
+            // the one an error sheet would show can never drift apart.
+            failure = .exportFailed(underlying: String(describing: error))
         }
     }
 }
@@ -110,10 +112,15 @@ struct ExportSheet: View {
                         .disabled(model.records.isEmpty)
                     }
 
-                    if let errorMessage = model.errorMessage {
-                        Text(errorMessage)
-                            .font(CarbonFont.caption)
-                            .foregroundStyle(CarbonColor.stamp)
+                    if let failure = model.failure {
+                        VStack(alignment: .leading, spacing: CarbonSpacing.hair) {
+                            Text(String(localized: failure.title))
+                                .font(CarbonFont.body)
+                                .foregroundStyle(CarbonColor.stamp)
+                            Text(String(localized: failure.guidance))
+                                .font(CarbonFont.caption)
+                                .foregroundStyle(CarbonColor.inkMuted)
+                        }
                     }
                 } footer: {
                     if model.records.isEmpty {
