@@ -14,6 +14,16 @@ struct ConfidenceRule: View {
     let band: ConfidenceBand
     var wasEdited: Bool = false
 
+    /// How far the confidence style has resolved across the blank rule, 0 to 1.
+    ///
+    /// The blank rule is the form as printed; the styled one is what Carbon made of it. Sweeping
+    /// between them is the second half of the Review animation, and it is why this is a fraction
+    /// rather than a bool — the two lines are trimmed against each other, so no gap and no
+    /// overlap is ever visible at the boundary.
+    ///
+    /// Defaults to fully resolved, so every other call site stays static.
+    var resolution: Double = 1
+
     @Environment(\.displayScale) private var displayScale
 
     var body: some View {
@@ -31,18 +41,20 @@ struct ConfidenceRule: View {
     }
 
     private var line: some View {
-        Rectangle()
-            .fill(.clear)
-            .frame(height: thickness)
-            .overlay(alignment: .top) {
-                Path { path in
-                    path.move(to: .zero)
-                    path.addLine(to: CGPoint(x: 10_000, y: 0))
-                }
+        ZStack {
+            // The rule as the blank form has it, retreating ahead of the sweep.
+            RuleLine()
+                .trim(from: resolution, to: 1)
+                .stroke(CarbonColor.rule, style: StrokeStyle(lineWidth: thickness))
+
+            // What Carbon made of it, arriving behind the sweep. `trim` is animatable, which
+            // is the whole reason the line is a Shape rather than the fixed-width Path with a
+            // `.clipped()` that used to be here.
+            RuleLine()
+                .trim(from: 0, to: resolution)
                 .stroke(color, style: strokeStyle)
-                .frame(height: thickness)
-                .clipped()
-            }
+        }
+        .frame(height: thickness)
     }
 
     /// Thicker than a hairline divider on purpose. This line is content, not a separator, and
@@ -81,6 +93,16 @@ extension ConfidenceBand {
         case .medium: String(localized: "worth a glance")
         case .needsReview: String(localized: "needs checking")
         }
+    }
+}
+
+/// A single horizontal line across whatever width it is given.
+private struct RuleLine: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: 0, y: rect.midY))
+        path.addLine(to: CGPoint(x: rect.width, y: rect.midY))
+        return path
     }
 }
 

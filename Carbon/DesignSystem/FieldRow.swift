@@ -17,6 +17,10 @@ struct FieldRow: View {
     /// "where did this come from?" — which is the question a doubtful value provokes.
     var onShowSource: (() -> Void)?
 
+    /// The row's part in the Review animation. Defaults to settled, so every other call site
+    /// and preview renders finished.
+    var reveal: FieldReveal = .settled
+
     var body: some View {
         VStack(alignment: .leading, spacing: CarbonSpacing.hair) {
             Text(label)
@@ -29,6 +33,14 @@ struct FieldRow: View {
                     .font(CarbonFont.dataValue)
                     .foregroundStyle(value.isEmpty ? CarbonColor.inkMuted : CarbonColor.ink)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    // Only the value moves. The label and the rule are the printed form; the
+                    // value is what was written onto it, so it is the only thing that arrives.
+                    .opacity(reveal.hasLanded ? 1 : 0)
+                    .offset(y: reveal.hasLanded ? 0 : 6)
+                    // Scoped to this Text on purpose. Hung on the row instead, the same
+                    // transaction animates the row's *height* when a two-line value arrives,
+                    // and the rows below slide up through the one above.
+                    .animation(reveal.landing, value: reveal.hasLanded)
 
                 if let onShowSource {
                     Button(action: onShowSource) {
@@ -41,7 +53,8 @@ struct FieldRow: View {
                 }
             }
 
-            ConfidenceRule(band: band, wasEdited: wasEdited)
+            ConfidenceRule(band: band, wasEdited: wasEdited, resolution: reveal.resolution)
+                .animation(reveal.resolving, value: reveal.resolution)
         }
         .padding(.vertical, CarbonSpacing.tight)
         .contentShape(.rect)
@@ -62,6 +75,22 @@ struct FieldRow: View {
         let state = wasEdited ? String(localized: "you corrected this") : band.spokenDescription
         return "\(label), \(spoken), \(state)"
     }
+}
+
+/// A row's share of the Review animation, carried as one value so the two beats cannot be set
+/// half-and-half at a call site.
+///
+/// The animations travel with the flags rather than being applied by the caller, because where
+/// they are attached is load-bearing: each has to be scoped to the thing it animates, or the
+/// same transaction picks up the row's layout as well.
+struct FieldReveal {
+    var hasLanded = true
+    var resolution: Double = 1
+    var landing: Animation?
+    var resolving: Animation?
+
+    /// Fully arrived, with nothing to animate. What every screen other than Review wants.
+    static let settled = FieldReveal()
 }
 
 #Preview {

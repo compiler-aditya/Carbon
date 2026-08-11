@@ -11,6 +11,10 @@ struct ReviewView: View {
     @State private var draftValue = ""
     @State private var sourceField: FieldSnapshot?
 
+    /// The two beats of the app's one orchestrated moment. See `runSignature()`.
+    @State private var hasLanded = false
+    @State private var hasResolved = false
+
     @Environment(\.services) private var services
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -23,14 +27,15 @@ struct ReviewView: View {
                     .padding(.horizontal, CarbonSpacing.regular)
                     .padding(.bottom, CarbonSpacing.regular)
 
-                ForEach(model.orderedFields, id: \.key) { field in
+                ForEach(Array(model.orderedFields.enumerated()), id: \.element.key) { index, field in
                     FieldRow(
                         label: field.label,
                         value: model.value(for: field)?.normalizedValue ?? "",
                         band: model.band(for: field),
                         wasEdited: model.value(for: field)?.wasEditedByUser ?? false,
                         onTap: { beginEditing(field) },
-                        onShowSource: canShowSource(for: field) ? { sourceField = field } : nil
+                        onShowSource: canShowSource(for: field) ? { sourceField = field } : nil,
+                        reveal: reveal(row: index)
                     )
                     .padding(.horizontal, CarbonSpacing.regular)
                 }
@@ -42,7 +47,10 @@ struct ReviewView: View {
         .safeAreaInset(edge: .bottom) { bottomBar }
         .navigationTitle("Review")
         .navigationBarTitleDisplayMode(.inline)
-        .task { await model.load() }
+        .task {
+            await model.load()
+            await runSignature()
+        }
         .sheet(item: $editingField) { field in
             editor(for: field)
         }
@@ -143,6 +151,49 @@ struct ReviewView: View {
             }
         }
         .presentationDetents([.medium])
+    }
+
+    /// The one orchestrated moment in the app, and the reason everything else is quiet.
+    ///
+    /// Values land in sequence, as if typed onto the form. Then, once the last of them has
+    /// settled, the rules resolve from blank to their confidence style. The order is the
+    /// argument the whole product makes: **value first, judgement second** — here is what
+    /// Carbon read, and only then, here is how sure it is.
+    ///
+    /// It runs after `load()` so the doubtful-first ordering is already settled. Animating a
+    /// list that is about to re-sort itself is how a signature moment becomes a shuffle.
+    private func runSignature() async {
+        guard !reduceMotion else {
+            hasLanded = true
+            hasResolved = true
+            return
+        }
+
+        hasLanded = true
+
+        // Wait for the last value rather than a fixed pause: on a six-field form the stagger
+        // is still running when a fixed 200ms would already have fired the rules.
+        let lastRow = Double(max(model.orderedFields.count - 1, 0))
+        try? await Task.sleep(for: .seconds(lastRow * stagger + landingDuration + settlePause))
+        guard !Task.isCancelled else { return }
+
+        hasResolved = true
+    }
+
+    private var stagger: Double { 0.04 }
+    private var landingDuration: Double { 0.18 }
+    private var settlePause: Double { 0.2 }
+
+    /// Both animations are nil under Reduce Motion, which is what makes the flags land without
+    /// a transition rather than merely faster.
+    private func reveal(row: Int) -> FieldReveal {
+        FieldReveal(
+            hasLanded: hasLanded,
+            resolution: hasResolved ? 1 : 0,
+            landing: reduceMotion
+                ? nil : .easeOut(duration: landingDuration).delay(Double(row) * stagger),
+            resolving: reduceMotion ? nil : .easeInOut(duration: 0.32)
+        )
     }
 
     /// Only offered when there is both a photograph and a region on it. A model-derived value
