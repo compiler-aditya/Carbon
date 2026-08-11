@@ -1,4 +1,6 @@
 import CarbonCore
+import CoreGraphics
+import PhotosUI
 import SwiftUI
 
 /// Creates a template: name it, pick a mode, declare its fields.
@@ -9,6 +11,7 @@ struct TemplateEditorView: View {
     let store: CarbonStore
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.services) private var services
 
     @State private var name = ""
     @State private var subtitle = ""
@@ -19,6 +22,12 @@ struct TemplateEditorView: View {
     @State private var isSaving = false
     @State private var saveError: CarbonError?
     @FocusState private var isAddFieldFocused: Bool
+
+    /// The assist: read the columns off a photograph of the form instead of typing them.
+    @State private var detected: [DetectedColumn] = []
+    @State private var isReading = false
+    @State private var readFailure: CarbonError?
+    @State private var isShowingCamera = false
 
     var body: some View {
         NavigationStack {
@@ -38,6 +47,10 @@ struct TemplateEditorView: View {
                     Text(modeExplanation)
                         .font(CarbonFont.caption)
                         .foregroundStyle(CarbonColor.inkMuted)
+                }
+
+                if mode == .table {
+                    assistSection
                 }
 
                 Section("Fields") {
@@ -96,7 +109,127 @@ struct TemplateEditorView: View {
                     ToolbarItem(placement: .topBarLeading) { EditButton() }
                 }
             }
+            .fullScreenCover(isPresented: $isShowingCamera) {
+                DocumentCamera(
+                    onFinish: { pages in
+                        isShowingCamera = false
+                        Task { await read(pages) }
+                    },
+                    onCancel: { isShowingCamera = false }
+                )
+                .ignoresSafeArea()
+            }
         }
+    }
+
+    /// Read the form instead of describing it.
+    ///
+    /// Table mode only, because it needs a header row to read; a record form has labels beside
+    /// values rather than above columns, and guessing fields from those is a different problem.
+    @ViewBuilder
+    private var assistSection: some View {
+        Section("From the form") {
+            if detected.isEmpty {
+                if DocumentCamera.isAvailable {
+                    Button("Scan the blank form") { isShowingCamera = true }
+                        .disabled(isReading)
+                }
+                PhotoImportButton(
+                    label: String(localized: "Choose a photo of the form"),
+                    isPrimary: false,
+                    onPicked: { pages in Task { await read(pages) } },
+                    onFailed: { readFailure = $0 }
+                )
+                .buttonStyle(.borderless)
+
+                if isReading {
+                    Text("Reading the columns…")
+                        .font(CarbonFont.caption)
+                        .foregroundStyle(CarbonColor.inkMuted)
+                } else {
+                    Text("Carbon reads the headings and sets the fields up for you.")
+                        .font(CarbonFont.caption)
+                        .foregroundStyle(CarbonColor.inkMuted)
+                }
+            } else {
+                // The count is in the button because it is the whole promise: the user can see
+                // what they are accepting before they accept it.
+                Button("Use detected columns — \(detected.count) found") { acceptDetected() }
+                    .buttonStyle(.borderless)
+
+                ForEach(detected, id: \.label) { column in
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack {
+                            Text(column.label).font(CarbonFont.body)
+                            Spacer()
+                            Text(column.type.rawValue)
+                                .font(CarbonFont.caption)
+                                .foregroundStyle(CarbonColor.inkMuted)
+                        }
+                        if !column.samples.isEmpty {
+                            // Showing what the guess was made from is the same honesty the
+                            // review screen runs on: the type is a guess, and here is the
+                            // evidence for it.
+                            Text(column.samples.joined(separator: "  ·  "))
+                                .font(CarbonFont.caption)
+                                .foregroundStyle(CarbonColor.inkMuted)
+                                .lineLimit(1)
+                        }
+                    }
+                }
+
+                Button("Read a different photo", role: .destructive) { detected = [] }
+                    .buttonStyle(.borderless)
+            }
+
+            if let readFailure {
+                VStack(alignment: .leading, spacing: CarbonSpacing.hair) {
+                    Text(String(localized: readFailure.title))
+                        .font(CarbonFont.body)
+                        .foregroundStyle(CarbonColor.stamp)
+                    Text(String(localized: readFailure.guidance))
+                        .font(CarbonFont.caption)
+                        .foregroundStyle(CarbonColor.inkMuted)
+                }
+            }
+        }
+    }
+
+    /// Runs recognition only — no extraction, because there is no template yet to extract
+    /// against. That is the whole point of this screen.
+    private func read(_ pages: [CGImage]) async {
+        guard let image = pages.first else { return }
+        isReading = true
+        readFailure = nil
+        defer { isReading = false }
+
+        do {
+            let page = try await services.recognizer.recognize(image, pageID: UUID())
+            let columns = ColumnDetector.columns(in: page)
+            guard !columns.isEmpty else {
+                readFailure = .noTableFound
+                return
+            }
+            detected = columns
+        } catch let error as CarbonError {
+            readFailure = error
+        } catch {
+            readFailure = .recognitionFailed(pageIndex: 0)
+        }
+    }
+
+    /// Appends rather than replaces, so a user who typed two fields first does not lose them.
+    /// Columns already present by label are skipped instead of duplicated.
+    private func acceptDetected() {
+        let existing = Set(fields.map { $0.label.lowercased() })
+        fields.append(
+            contentsOf: detected
+                .filter { !existing.contains($0.label.lowercased()) }
+                .map {
+                    NewFieldSpec(label: $0.label, type: $0.type, columnAliases: [$0.alias])
+                }
+        )
+        detected = []
     }
 
     private var addFieldRow: some View {
