@@ -17,13 +17,26 @@ struct TemplateListView: View {
     @State private var selection: TemplateSnapshot?
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
-    /// One column at accessibility sizes. Two columns of 160pt leaves each card narrower than
-    /// a single word of mono at those sizes, and "7 records" wraps to three lines.
+    /// A card wants a size, not a share of the screen.
+    ///
+    /// One column at accessibility sizes on a phone: two columns of 160pt leaves each card
+    /// narrower than a single word of mono at those sizes, and "7 records" wraps to three
+    /// lines. On an iPad the same 160pt minimum would lay four thin cards across 834pt, so the
+    /// minimum grows with the size class and the grid settles at three in portrait — with room
+    /// to become four in landscape rather than a hard-coded count that wastes the width.
     private var columns: [GridItem] {
-        dynamicTypeSize.isAccessibilitySize
-            ? [GridItem(.flexible())]
-            : [GridItem(.adaptive(minimum: 160), spacing: CarbonSpacing.regular)]
+        if dynamicTypeSize.isAccessibilitySize, horizontalSizeClass != .regular {
+            return [GridItem(.flexible())]
+        }
+        let minimum: CGFloat =
+            if horizontalSizeClass == .regular {
+                dynamicTypeSize.isAccessibilitySize ? 320 : 240
+            } else {
+                160
+            }
+        return [GridItem(.adaptive(minimum: minimum), spacing: CarbonSpacing.regular)]
     }
 
     var body: some View {

@@ -15,30 +15,46 @@ struct CellGrid: View {
     // Scaled, not fixed. A grid is the one place the layout cannot reflow, so the cells
     // themselves have to grow with the text or they clip the values they exist to show.
     @ScaledMetric(relativeTo: .body) private var rowNumberWidth: CGFloat = 44
-    @ScaledMetric(relativeTo: .body) private var columnWidth: CGFloat = 132
+    @ScaledMetric(relativeTo: .body) private var baseColumnWidth: CGFloat = 132
 
     /// Also the tap target. 44pt is the floor at every type size.
     @ScaledMetric(relativeTo: .body) private var rowHeight: CGFloat = 48
 
     var body: some View {
-        ScrollView([.horizontal, .vertical]) {
-            LazyVStack(alignment: .leading, spacing: 0, pinnedViews: [.sectionHeaders]) {
-                Section {
-                    ForEach(Array(records.enumerated()), id: \.element.id) { index, record in
-                        row(record, number: index + 1)
+        // The grid is the one screen that wants the whole page rather than a readable column,
+        // so on an iPad the columns take the spare width instead of leaving a bare strip of
+        // paper beside them. On a phone the fields never fit anyway and nothing changes.
+        GeometryReader { proxy in
+            let width = resolvedColumnWidth(available: proxy.size.width)
+            ScrollView([.horizontal, .vertical]) {
+                LazyVStack(alignment: .leading, spacing: 0, pinnedViews: [.sectionHeaders]) {
+                    Section {
+                        ForEach(Array(records.enumerated()), id: \.element.id) { index, record in
+                            row(record, number: index + 1, columnWidth: width)
+                        }
+                    } header: {
+                        headerRow(columnWidth: width)
                     }
-                } header: {
-                    headerRow
                 }
+                // A scroll view centres content shorter than itself. A grid that floats in the
+                // middle of the screen reads as a rendering fault, not a design. `.infinity`
+                // is not enough here: a doubly-scrollable view proposes nothing in either
+                // axis, so the height has to be the measured one.
+                .frame(minHeight: proxy.size.height, alignment: .top)
             }
-            // A scroll view centres content shorter than itself. A grid that floats in the
-            // middle of the screen reads as a rendering fault, not a design.
-            .frame(maxHeight: .infinity, alignment: .top)
+            .background(CarbonColor.paperRaised)
         }
-        .background(CarbonColor.paperRaised)
     }
 
-    private var headerRow: some View {
+    /// Never narrower than the base width, and never more than twice it — a two-field table
+    /// stretched across an iPad would give a date column wide enough for a paragraph.
+    private func resolvedColumnWidth(available: CGFloat) -> CGFloat {
+        guard !template.fields.isEmpty else { return baseColumnWidth }
+        let share = (available - rowNumberWidth) / CGFloat(template.fields.count)
+        return min(max(baseColumnWidth, share), baseColumnWidth * 2)
+    }
+
+    private func headerRow(columnWidth: CGFloat) -> some View {
         HStack(spacing: 0) {
             gridCell(width: rowNumberWidth) {
                 // The gutter's header is deliberately blank; a row number needs no label.
@@ -58,7 +74,7 @@ struct CellGrid: View {
         .background(CarbonColor.paper)
     }
 
-    private func row(_ record: RecordSnapshot, number: Int) -> some View {
+    private func row(_ record: RecordSnapshot, number: Int, columnWidth: CGFloat) -> some View {
         HStack(spacing: 0) {
             gridCell(width: rowNumberWidth) {
                 Text("\(number)")
