@@ -6,6 +6,8 @@ import SwiftUI
 struct TemplateCard: View {
     let template: TemplateSnapshot
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     var body: some View {
         VStack(alignment: .leading, spacing: CarbonSpacing.tight) {
             Image(systemName: template.symbolName)
@@ -41,7 +43,13 @@ struct TemplateCard: View {
             }
         }
         .padding(CarbonSpacing.regular)
-        .frame(maxWidth: .infinity, minHeight: 150, alignment: .leading)
+        // A minimum height keeps a grid of cards even at normal sizes; at accessibility
+        // sizes the content is taller than any minimum and must be allowed to set it.
+        .frame(
+            maxWidth: .infinity,
+            minHeight: dynamicTypeSize.isAccessibilitySize ? nil : 150,
+            alignment: .leading
+        )
         .background(CarbonColor.paperRaised)
         .clipShape(RoundedRectangle(cornerRadius: CarbonRadius.card))
         .overlay {
@@ -59,6 +67,8 @@ struct NewTemplateCard: View {
     /// nothing; a gated one teaches what Pro is for.
     let isLocked: Bool
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     var body: some View {
         VStack(spacing: CarbonSpacing.tight) {
             Image(systemName: isLocked ? "lock" : "plus")
@@ -68,7 +78,7 @@ struct NewTemplateCard: View {
                 .font(CarbonFont.body)
                 .foregroundStyle(CarbonColor.carbon)
         }
-        .frame(maxWidth: .infinity, minHeight: 150)
+        .frame(maxWidth: .infinity, minHeight: dynamicTypeSize.isAccessibilitySize ? 110 : 150)
         .overlay {
             RoundedRectangle(cornerRadius: CarbonRadius.card)
                 .stroke(

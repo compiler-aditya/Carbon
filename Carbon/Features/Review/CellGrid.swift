@@ -12,9 +12,13 @@ struct CellGrid: View {
     let records: [RecordSnapshot]
     let onEdit: (RecordSnapshot, FieldSnapshot) -> Void
 
-    private let rowNumberWidth: CGFloat = 44
-    private let columnWidth: CGFloat = 132
-    private let rowHeight: CGFloat = 48
+    // Scaled, not fixed. A grid is the one place the layout cannot reflow, so the cells
+    // themselves have to grow with the text or they clip the values they exist to show.
+    @ScaledMetric(relativeTo: .body) private var rowNumberWidth: CGFloat = 44
+    @ScaledMetric(relativeTo: .body) private var columnWidth: CGFloat = 132
+
+    /// Also the tap target. 44pt is the floor at every type size.
+    @ScaledMetric(relativeTo: .body) private var rowHeight: CGFloat = 48
 
     var body: some View {
         ScrollView([.horizontal, .vertical]) {

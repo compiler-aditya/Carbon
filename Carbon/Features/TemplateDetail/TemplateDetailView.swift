@@ -17,6 +17,16 @@ struct TemplateDetailView: View {
     @State private var isShowingCamera = false
     @State private var isShowingPaywall = false
     @State private var recordCount = 0
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    /// Rows that pair a label with a value stack vertically at accessibility sizes. Side by
+    /// side, "7 records" in mono wraps mid-word to "7 / record / s", which is worse than
+    /// simply putting it on its own line.
+    private var pairLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: CarbonSpacing.hair))
+            : AnyLayout(HStackLayout())
+    }
 
     var body: some View {
         ScrollView {
@@ -140,17 +150,23 @@ struct TemplateDetailView: View {
         NavigationLink {
             DatasetView(model: DatasetModel(store: store, template: template))
         } label: {
-            HStack {
+            pairLayout {
                 Text("View all records")
                     .font(CarbonFont.body)
                     .foregroundStyle(CarbonColor.carbon)
-                Spacer()
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 Text("\(recordCount) records")
                     .font(CarbonFont.dataValue)
                     .foregroundStyle(CarbonColor.inkMuted)
-                Image(systemName: "chevron.right")
-                    .font(CarbonFont.caption)
-                    .foregroundStyle(CarbonColor.inkMuted)
+                    .frame(
+                        maxWidth: dynamicTypeSize.isAccessibilitySize ? .infinity : nil,
+                        alignment: .leading
+                    )
+                if !dynamicTypeSize.isAccessibilitySize {
+                    Image(systemName: "chevron.right")
+                        .font(CarbonFont.caption)
+                        .foregroundStyle(CarbonColor.inkMuted)
+                }
             }
             .padding(CarbonSpacing.regular)
             .background(CarbonColor.paperRaised)
@@ -167,11 +183,11 @@ struct TemplateDetailView: View {
         VStack(alignment: .leading, spacing: CarbonSpacing.snug) {
             SectionHeader("Fields")
             ForEach(template.fields, id: \.key) { field in
-                HStack {
+                pairLayout {
                     Text(field.label)
                         .font(CarbonFont.body)
                         .foregroundStyle(CarbonColor.ink)
-                    Spacer()
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     Text(field.type.rawValue)
                         .font(CarbonFont.caption)
                         .foregroundStyle(CarbonColor.inkMuted)

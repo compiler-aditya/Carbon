@@ -16,8 +16,14 @@ struct TemplateListView: View {
     @State private var isShowingPaywall = false
     @State private var selection: TemplateSnapshot?
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    /// One column at accessibility sizes. Two columns of 160pt leaves each card narrower than
+    /// a single word of mono at those sizes, and "7 records" wraps to three lines.
     private var columns: [GridItem] {
-        [GridItem(.adaptive(minimum: 160), spacing: CarbonSpacing.regular)]
+        dynamicTypeSize.isAccessibilitySize
+            ? [GridItem(.flexible())]
+            : [GridItem(.adaptive(minimum: 160), spacing: CarbonSpacing.regular)]
     }
 
     var body: some View {

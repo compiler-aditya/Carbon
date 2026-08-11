@@ -195,11 +195,22 @@ struct RecordRow: View {
     let template: TemplateSnapshot
     let record: RecordSnapshot
 
+    /// Scales with the text beside it — a fixed 7pt dot is a speck next to accessibility type.
+    @ScaledMetric(relativeTo: .caption) private var statusSize: CGFloat = 11
+
     var body: some View {
         HStack(spacing: CarbonSpacing.snug) {
-            Circle()
-                .fill(record.status == .needsReview ? CarbonColor.stamp : CarbonColor.confirm)
-                .frame(width: 7, height: 7)
+            // Shape carries the status, not only colour. A red dot and a green dot are the
+            // same dot to a colour-blind reader, and this app's own rule is that status is
+            // never conveyed by colour alone.
+            Image(
+                systemName: record.status == .needsReview
+                    ? "exclamationmark.circle.fill" : "checkmark.circle"
+            )
+            .font(.system(size: statusSize))
+            .foregroundStyle(
+                record.status == .needsReview ? CarbonColor.stamp : CarbonColor.confirm
+            )
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(primaryValues)
