@@ -84,7 +84,10 @@ extension CaptureRecord {
             values: (values ?? []).map(\.snapshot),
             engineVersion: engineVersion,
             extractionDurationMs: extractionDurationMs,
-            modelWasAvailable: modelWasAvailable
+            modelWasAvailable: modelWasAvailable,
+            pages: (pages ?? [])
+                .sorted { $0.pageIndex < $1.pageIndex }
+                .map { PageRef(captureID: $0.captureID, pageIndex: $0.pageIndex) }
         )
     }
 }

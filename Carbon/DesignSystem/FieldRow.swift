@@ -13,6 +13,10 @@ struct FieldRow: View {
     var wasEdited: Bool = false
     var onTap: (() -> Void)?
 
+    /// Shown only when there is a photograph and a known region to show. Tapping it answers
+    /// "where did this come from?" — which is the question a doubtful value provokes.
+    var onShowSource: (() -> Void)?
+
     var body: some View {
         VStack(alignment: .leading, spacing: CarbonSpacing.hair) {
             Text(label)
@@ -20,10 +24,22 @@ struct FieldRow: View {
                 .textCase(.uppercase)
                 .foregroundStyle(CarbonColor.inkMuted)
 
-            Text(displayValue)
-                .font(CarbonFont.dataValue)
-                .foregroundStyle(value.isEmpty ? CarbonColor.inkMuted : CarbonColor.ink)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            HStack(spacing: CarbonSpacing.tight) {
+                Text(displayValue)
+                    .font(CarbonFont.dataValue)
+                    .foregroundStyle(value.isEmpty ? CarbonColor.inkMuted : CarbonColor.ink)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                if let onShowSource {
+                    Button(action: onShowSource) {
+                        Image(systemName: "doc.text.magnifyingglass")
+                            .foregroundStyle(CarbonColor.carbon)
+                    }
+                    .buttonStyle(.plain)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .accessibilityLabel("Show \(label) on the page")
+                }
+            }
 
             ConfidenceRule(band: band, wasEdited: wasEdited)
         }

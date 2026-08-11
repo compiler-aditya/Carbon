@@ -9,6 +9,9 @@ struct ReviewView: View {
     @State var model: ReviewModel
     @State private var editingField: FieldSnapshot?
     @State private var draftValue = ""
+    @State private var sourceField: FieldSnapshot?
+
+    @Environment(\.services) private var services
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dismiss) private var dismiss
@@ -25,10 +28,10 @@ struct ReviewView: View {
                         label: field.label,
                         value: model.value(for: field)?.normalizedValue ?? "",
                         band: model.band(for: field),
-                        wasEdited: model.value(for: field)?.wasEditedByUser ?? false
-                    ) {
-                        beginEditing(field)
-                    }
+                        wasEdited: model.value(for: field)?.wasEditedByUser ?? false,
+                        onTap: { beginEditing(field) },
+                        onShowSource: canShowSource(for: field) ? { sourceField = field } : nil
+                    )
                     .padding(.horizontal, CarbonSpacing.regular)
                 }
             }
@@ -41,6 +44,17 @@ struct ReviewView: View {
         .task { await model.load() }
         .sheet(item: $editingField) { field in
             editor(for: field)
+        }
+        .sheet(item: $sourceField) { field in
+            SourceRegionView(
+                model: SourceRegionModel(
+                    fieldLabel: field.label,
+                    value: model.value(for: field)?.normalizedValue ?? "",
+                    pageRef: model.record?.pages.first,
+                    frame: model.value(for: field)?.frame,
+                    pageStore: services.pageStore
+                )
+            )
         }
     }
 
@@ -127,6 +141,12 @@ struct ReviewView: View {
             }
         }
         .presentationDetents([.medium])
+    }
+
+    /// Only offered when there is both a photograph and a region on it. A model-derived value
+    /// has no frame — it came from a flat transcript — so pointing at the page would be a lie.
+    private func canShowSource(for field: FieldSnapshot) -> Bool {
+        model.record?.pages.isEmpty == false && model.value(for: field)?.frame != nil
     }
 
     private func beginEditing(_ field: FieldSnapshot) {

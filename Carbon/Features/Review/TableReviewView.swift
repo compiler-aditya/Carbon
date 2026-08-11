@@ -53,6 +53,9 @@ struct TableReviewView: View {
     @State var model: TableReviewModel
     @State private var editing: (record: RecordSnapshot, field: FieldSnapshot)?
     @State private var draftValue = ""
+    @State private var source: (record: RecordSnapshot, field: FieldSnapshot)?
+
+    @Environment(\.services) private var services
 
     @Environment(\.dismiss) private var dismiss
 
@@ -74,7 +77,14 @@ struct TableReviewView: View {
                 CellEditor(
                     field: editing.field,
                     rawText: editing.record.value(forKey: editing.field.key)?.rawText,
-                    value: $draftValue
+                    value: $draftValue,
+                    onShowSource: canShowSource(editing.record, editing.field)
+                        ? {
+                            let target = editing
+                            self.editing = nil
+                            source = target
+                        }
+                        : nil
                 ) { newValue in
                     let target = editing
                     self.editing = nil
@@ -82,6 +92,19 @@ struct TableReviewView: View {
                 } onCancel: {
                     self.editing = nil
                 }
+            }
+        }
+        .sheet(isPresented: isShowingSource) {
+            if let source {
+                SourceRegionView(
+                    model: SourceRegionModel(
+                        fieldLabel: source.field.label,
+                        value: source.record.value(forKey: source.field.key)?.normalizedValue ?? "",
+                        pageRef: source.record.pages.first,
+                        frame: source.record.value(forKey: source.field.key)?.frame,
+                        pageStore: services.pageStore
+                    )
+                )
             }
         }
     }
@@ -124,6 +147,15 @@ struct TableReviewView: View {
     private var isEditing: Binding<Bool> {
         Binding(get: { editing != nil }, set: { if !$0 { editing = nil } })
     }
+
+    private var isShowingSource: Binding<Bool> {
+        Binding(get: { source != nil }, set: { if !$0 { source = nil } })
+    }
+
+    /// Only when there is a photograph and a region on it to point at.
+    private func canShowSource(_ record: RecordSnapshot, _ field: FieldSnapshot) -> Bool {
+        !record.pages.isEmpty && record.value(forKey: field.key)?.frame != nil
+    }
 }
 
 /// Shared cell editor. Opens the keyboard the field's declared type calls for and shows what
@@ -132,6 +164,7 @@ struct CellEditor: View {
     let field: FieldSnapshot
     let rawText: String?
     @Binding var value: String
+    var onShowSource: (() -> Void)?
     let onSave: (String) -> Void
     let onCancel: () -> Void
 
@@ -155,6 +188,13 @@ struct CellEditor: View {
                 } footer: {
                     if let rawText, !rawText.isEmpty {
                         Text("Read from the page as \(rawText)")
+                    }
+                }
+
+                if let onShowSource {
+                    Section {
+                        Button("Show on the page", systemImage: "doc.text.magnifyingglass",
+                               action: onShowSource)
                     }
                 }
             }

@@ -18,6 +18,11 @@ public struct RecordSnapshot: Sendable, Identifiable, Hashable {
     public let extractionDurationMs: Int
     public let modelWasAvailable: Bool
 
+    /// The photographs this record came from, so a value can be shown against the page it was
+    /// read off. Empty once the images have been purged from Settings — the data outlives the
+    /// picture, and the review screen has to cope with that.
+    public let pages: [PageRef]
+
     public init(
         id: UUID,
         capturedAt: Date,
@@ -26,7 +31,8 @@ public struct RecordSnapshot: Sendable, Identifiable, Hashable {
         values: [FieldValueSnapshot],
         engineVersion: String = "",
         extractionDurationMs: Int = 0,
-        modelWasAvailable: Bool = false
+        modelWasAvailable: Bool = false,
+        pages: [PageRef] = []
     ) {
         self.id = id
         self.capturedAt = capturedAt
@@ -36,6 +42,7 @@ public struct RecordSnapshot: Sendable, Identifiable, Hashable {
         self.engineVersion = engineVersion
         self.extractionDurationMs = extractionDurationMs
         self.modelWasAvailable = modelWasAvailable
+        self.pages = pages
     }
 
     public func value(forKey key: String) -> FieldValueSnapshot? {
