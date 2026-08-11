@@ -112,6 +112,13 @@ struct TemplateDetailView: View {
         .onChange(of: captureModel?.state) { _, newValue in
             if case .review(let ids) = newValue { reviewRecordIDs = ids }
         }
+        // One of the app's two haptics. It marks the moment rows actually entered the dataset,
+        // which is the same moment in both modes — a table page's rows are written before the
+        // grid is shown, so its Save button confirms them rather than saving them.
+        //
+        // The condition matters: without it this also fires on the reset to empty when the
+        // review is dismissed, and a success tap on the way *out* of a screen is noise.
+        .sensoryFeedback(.success, trigger: reviewRecordIDs) { _, new in !new.isEmpty }
         .onChange(of: captureModel?.paywallReason) { _, newValue in
             isShowingPaywall = newValue != nil
         }

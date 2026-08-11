@@ -136,6 +136,10 @@ struct ExportSheet: View {
                 }
             }
             .task { await model.load() }
+            // The app's other haptic. Fired when the file exists rather than when it is
+            // shared: preparing it is the part that can fail, and the share sheet taking over
+            // is the system's moment, not ours.
+            .sensoryFeedback(.success, trigger: model.fileURL) { _, new in new != nil }
         }
         .presentationDetents([.medium])
     }
