@@ -92,23 +92,40 @@ struct DatasetView: View {
                 isShowingExport = true
             }
         }
-        .task { await model.load() }
+        .onAppear { Task { await model.load() } }
     }
 
     private var list: some View {
         List {
             ForEach(model.records, id: \.id) { record in
-                RecordRow(template: model.template, record: record)
-                    .listRowBackground(CarbonColor.paperRaised)
-                    .swipeActions(edge: .trailing) {
-                        Button("Delete", role: .destructive) {
-                            Task { await model.delete(record, pageStore: services.pageStore) }
-                        }
+                // A dataset you cannot open is a dead end: a value spotted as wrong here has
+                // no route to being fixed. Every row leads to the same review screen a fresh
+                // capture does, so correcting an old record works exactly like correcting a
+                // new one. One record is a field list even for a table template — the grid is
+                // for reviewing a whole page at once, not for revisiting a single row.
+                NavigationLink {
+                    ReviewView(
+                        model: ReviewModel(
+                            store: CarbonStore(modelContainer: modelContext.container),
+                            template: model.template,
+                            recordID: record.id
+                        )
+                    )
+                } label: {
+                    RecordRow(template: model.template, record: record)
+                }
+                .listRowBackground(CarbonColor.paperRaised)
+                .swipeActions(edge: .trailing) {
+                    Button("Delete", role: .destructive) {
+                        Task { await model.delete(record, pageStore: services.pageStore) }
                     }
+                }
             }
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
+        // A correction made in there changes a status and a count out here.
+        .refreshable { await model.load() }
     }
 
     /// Chips carry their counts, so the shape of the dataset is visible without tapping

@@ -47,8 +47,7 @@ final class ReviewModel {
     }
 
     func load() async {
-        record = try? await store.recordSnapshots(templateID: template.id)
-            .first { $0.id == recordID }
+        record = try? await store.recordSnapshot(id: recordID)
     }
 
     func correct(field: FieldSnapshot, to newValue: String) async {

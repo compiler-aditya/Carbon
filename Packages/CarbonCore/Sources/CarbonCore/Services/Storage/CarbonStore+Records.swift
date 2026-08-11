@@ -50,6 +50,11 @@ extension CarbonStore {
         return snapshots
     }
 
+    /// One record by id.
+    public func recordSnapshot(id: UUID) throws -> RecordSnapshot? {
+        try record(withID: id)?.snapshot
+    }
+
     /// Counts for the filter chips. Cheap enough to recompute, and a stale count on a chip is
     /// worse than the work of keeping it right.
     public func recordCounts(templateID: UUID) throws -> [RecordFilter: Int] {
