@@ -36,17 +36,13 @@ public actor FakeUsageMeter: UsageMetering {
     }
 
     public func canCreateTemplate(existingCount: Int, isPro: Bool) async -> MeterDecision {
-        if isPro { return .allowed }
-        return existingCount < FreeTierLimit.templates ? .allowed : .paywall(reason: .templateLimit)
+        .forTemplate(existingCount: existingCount, isPro: isPro)
     }
 
+    // Shared with the persisted meter rather than reimplemented. A preview that disagreed with
+    // the running app about where the limit falls would be worse than no preview.
     public func canCreateRecords(count: Int, isPro: Bool) async -> MeterDecision {
-        if isPro { return .allowed }
-        let remaining = FreeTierLimit.recordsPerPeriod - recordsCreated
-        if remaining <= 0 { return .paywall(reason: .recordLimit) }
-        if count <= remaining { return .allowed }
-        // Some of the page fits. Save those rows rather than refusing the whole scan.
-        return .partial(allowed: remaining)
+        .forRecords(count: count, alreadyUsed: recordsCreated, isPro: isPro)
     }
 
     public func recordCreated(count: Int) async {
