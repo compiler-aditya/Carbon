@@ -29,6 +29,13 @@ struct SettingsView: View {
             privacySection
             aboutSection
         }
+        // Grouped, because sections of settings are what a grouped list is for and this screen
+        // should feel like the system's. Only the colour changes: the app's paper underneath
+        // and raised paper for the rows, instead of iOS grey and pure white. Settings was the
+        // one screen still wearing the default palette while its own contents used the tokens.
+        .listRowBackground(CarbonColor.paperRaised)
+        .scrollContentBackground(.hidden)
+        .carbonBackground()
         .task {
             modelState = await ModelAvailability().state()
             await loadUsage()
