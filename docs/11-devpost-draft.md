@@ -17,7 +17,7 @@ more than a missing feature.
 |---|---|
 | Video URL (public YouTube, ≤2:00) | ⬜ not shot — `09-demo-video-script.md` |
 | Accuracy numbers, if a corpus gets collected | ⬜ table is empty by design until then |
-| Screenshots — 1179×2556, no device frame | ⬜ |
+| Screenshots — 1179×2556, no device frame | ✅ seven in `docs/media/screenshots/`, numbered in gallery order |
 | 1024×1024 icon | ✅ `Carbon/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png` |
 | Repo URL | ✅ https://github.com/compiler-aditya/Carbon |
 | Student email confirmed on the Devpost account | ⬜ required for Next Gen eligibility |
