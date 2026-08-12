@@ -174,7 +174,7 @@ via RevenueCat; the free limit is a courtesy, not DRM.
 cd Packages/CarbonCore && swift test
 ```
 
-**216 tests across 27 suites**, concentrated where extraction bugs live: normalization, Tier 1
+**230 tests across 29 suites**, concentrated where extraction bugs live: normalization, Tier 1
 extraction, the ladder's merging rules, the rule that decides whether a page produced anything
 at all, CSV RFC-4180 edge cases, the SwiftData schema against a real container, storage file
 cleanup, and the corpus maths. Eight drive Vision and

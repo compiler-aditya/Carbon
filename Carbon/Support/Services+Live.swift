@@ -1,19 +1,23 @@
 import CarbonCore
+// Still needed for `FakePageStore`, the last-resort page store below — which is also how a
+// fake meter came to be wired into the shipping app. Worth removing that dependency, but not
+// in the same change as fixing the meter.
 import CarbonTestFixtures
 import RevenueCat
+import SwiftData
 
 extension Services {
     /// The service set the running app uses.
     ///
-    /// Everything is live except the meter, which is called out rather than hidden: its
-    /// counts are in memory, so they reset on launch. The gating arithmetic is real; only its
-    /// persistence is missing.
+    /// Takes the container because the meter is persisted in it. It used to take nothing and
+    /// wire the in-memory fake, which meant the free-tier record limit reset on every launch
+    /// and Settings reported zero records in a month that had plenty.
     ///
     /// Entitlements are live whenever RevenueCat is configured, and a fixed `.unknown`
     /// otherwise. `Purchases.shared` traps if the SDK was never configured, so that branch is
     /// load-bearing rather than defensive.
     @MainActor
-    static func live() -> Services {
+    static func live(container: ModelContainer) -> Services {
         let entitlements: any EntitlementProviding =
             Purchases.isConfigured
             ? LiveEntitlementService()
@@ -30,7 +34,7 @@ extension Services {
             normalizer: StandardNormalizer(),
             exporter: CSVExporter(),
             entitlements: entitlements,
-            meter: FakeUsageMeter()
+            meter: LiveUsageMetering(modelContainer: container)
         )
     }
 

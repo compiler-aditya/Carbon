@@ -26,7 +26,7 @@ struct CarbonApp: App {
     var body: some Scene {
         WindowGroup {
             AppRoot()
-                .environment(\.services, .live())
+                .environment(\.services, .live(container: container))
         }
         .modelContainer(container)
     }
