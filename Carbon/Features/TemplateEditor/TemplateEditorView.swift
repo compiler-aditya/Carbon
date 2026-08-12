@@ -178,7 +178,9 @@ struct TemplateEditorView: View {
                     }
                 }
 
-                Button("Read a different photo", role: .destructive) { detected = [] }
+                // Not destructive: nothing is lost by reading another photo, and red here
+                // reads as a warning about an action that carries no risk at all.
+                Button("Read a different photo") { detected = [] }
                     .buttonStyle(.borderless)
             }
 
