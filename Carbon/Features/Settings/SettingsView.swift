@@ -1,8 +1,11 @@
 import CarbonCore
-import CarbonTestFixtures
 import RevenueCat
 import RevenueCatUI
 import SwiftUI
+
+#if DEBUG
+    import CarbonTestFixtures
+#endif
 
 /// Settings. Carries the Pro status and the restore path, plus the privacy statement — which
 /// is a real claim about how the app works, so it is stated plainly rather than as a link.
@@ -228,6 +231,8 @@ private struct RestoreOutcome: Identifiable {
     let message: String
 }
 
+#if DEBUG
+
 #Preview("Free") {
     NavigationStack { SettingsView().navigationTitle("Settings") }
         .environment(\.services, .preview())
@@ -242,3 +247,5 @@ private struct RestoreOutcome: Identifiable {
     NavigationStack { SettingsView().navigationTitle("Settings") }
         .environment(\.services, .previewUnconfigured())
 }
+
+#endif

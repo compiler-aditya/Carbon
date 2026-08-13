@@ -2,6 +2,10 @@ import CarbonCore
 import SwiftData
 import SwiftUI
 
+#if DEBUG
+    import CarbonTestFixtures
+#endif
+
 /// The root screen. Templates are the organising concept of the product, so they are the
 /// first thing and everything else is reached through one.
 struct TemplateListView: View {
@@ -135,8 +139,12 @@ struct TemplateListView: View {
     }
 }
 
+#if DEBUG
+
 #Preview("Empty") {
     NavigationStack { TemplateListView() }
         .environment(\.services, .preview())
         .modelContainer(for: CarbonSchemaV1.models, inMemory: true)
 }
+
+#endif

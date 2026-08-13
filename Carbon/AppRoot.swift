@@ -1,7 +1,12 @@
 import CarbonCore
-import CarbonTestFixtures
 import SwiftData
 import SwiftUI
+
+// Fixtures are a debug-only dependency: they exist for previews and must never be reachable
+// from a shipping build. The guard is what makes that a fact rather than an intention.
+#if DEBUG
+    import CarbonTestFixtures
+#endif
 
 /// Root navigation. Two tabs — Templates and Settings — because the template is the
 /// organising concept of the product and the navigation should teach that. Datasets are
@@ -69,6 +74,8 @@ struct AppRoot: View {
     }
 }
 
+#if DEBUG
+
 #Preview("Empty") {
     AppRoot()
         .environment(\.services, .preview())
@@ -101,3 +108,5 @@ private enum PreviewData {
         return container
     }()
 }
+
+#endif

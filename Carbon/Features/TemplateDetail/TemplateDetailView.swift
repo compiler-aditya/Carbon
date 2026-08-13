@@ -4,6 +4,10 @@ import PhotosUI
 import SwiftData
 import SwiftUI
 
+#if DEBUG
+    import CarbonTestFixtures
+#endif
+
 /// One template: scan it, see its fields, see what it has collected.
 ///
 /// **Scan is the largest tappable thing on the screen** because it is the verb of the app.
@@ -323,6 +327,8 @@ struct TemplateDetailView: View {
     }
 }
 
+#if DEBUG
+
 #Preview {
     NavigationStack {
         TemplateDetailView(template: SampleTemplatePreview.dailyRegister)
@@ -330,6 +336,8 @@ struct TemplateDetailView: View {
     .environment(\.services, .preview())
     .modelContainer(for: CarbonSchemaV1.models, inMemory: true)
 }
+
+#endif
 
 /// A stand-in so this screen previews without reaching into the fixtures package for a
 /// snapshot it would only use here.
